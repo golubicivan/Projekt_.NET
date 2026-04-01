@@ -1,0 +1,14 @@
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ZagrebEvents.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ZagrebEvents.AssemblyInfoInputs.cache
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ZagrebEvents.AssemblyInfo.cs
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ZagrebEvents.csproj.CoreCompileInputs.cache
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\bin\Debug\net8.0\ZagrebEvents.exe
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\bin\Debug\net8.0\ZagrebEvents.deps.json
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\bin\Debug\net8.0\ZagrebEvents.runtimeconfig.json
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\bin\Debug\net8.0\ZagrebEvents.dll
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\bin\Debug\net8.0\ZagrebEvents.pdb
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ZagrebEvents.dll
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\refint\ZagrebEvents.dll
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ZagrebEvents.pdb
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ZagrebEvents.genruntimeconfig.cache
+C:\Users\Dell4\OneDrive - CARNET\Desktop\skola_ig\NET\ZagrebEvents\ZagrebEvents\obj\Debug\net8.0\ref\ZagrebEvents.dll
