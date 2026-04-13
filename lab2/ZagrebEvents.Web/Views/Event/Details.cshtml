@@ -1,0 +1,305 @@
+@model Event
+@{
+    ViewData["Title"] = Model.Name;
+    var freeTables = Model.Venue.Tables
+        .Where(t => !Model.Reservations
+            .Where(r => r.Status != ReservationStatus.Cancelled)
+            .Select(r => r.Table?.Id)
+            .Contains(t.Id))
+        .ToList();
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/Event/Index">Svi eventi</a> › <span>@Model.Name</span>
+</nav>
+}
+
+@if (TempData["ReservationSuccess"] != null)
+{
+    <div class="ze-alert-success">✓ @TempData["ReservationSuccess"]</div>
+}
+
+<div class="event-detail">
+    <!-- Hero -->
+    <div class="event-detail-hero">
+        <img src="@Model.PosterUrl" alt="@Model.Name"
+             onerror="this.src='https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1200'" />
+        <div class="event-detail-hero-overlay">
+            <span class="event-badge" style="background:@Model.TypeColor">@Model.TypeIcon @Model.TypeLabel</span>
+            <h1 class="event-detail-title">@Model.Name</h1>
+            <div class="event-detail-venue-link">
+                <a href="/Venue/Details/@Model.Venue.Id">📍 @Model.Venue.Name — @Model.Venue.Address</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="event-detail-content">
+        <!-- Lijevo: info + rezervacija -->
+        <div class="event-detail-main">
+
+            <!-- Opis -->
+            <div class="detail-section">
+                <h2>O eventu</h2>
+                <p>@Model.Description</p>
+            </div>
+
+            <!-- Info kartica -->
+            <div class="detail-section event-info-grid">
+                <div class="ze-stat-card">
+                    <div class="stat-label">Datum i vrijeme</div>
+                    <div class="stat-value">@Model.StartTime.ToString("dd.MM.yyyy")</div>
+                    <div class="stat-sub">@Model.StartTime.ToString("HH:mm") – @Model.EndTime.ToString("HH:mm")</div>
+                </div>
+                <div class="ze-stat-card">
+                    <div class="stat-label">Ulaz</div>
+                    <div class="stat-value" style="color:#10b981">
+                        @(Model.EntryPrice == 0 ? "Besplatno" : $"{Model.EntryPrice:F2} EUR")
+                    </div>
+                </div>
+                <div class="ze-stat-card">
+                    <div class="stat-label">Dobna granica</div>
+                    <div class="stat-value" style="color:@(Model.AgeLimit > 0 ? "#ef4444" : "#10b981")">
+                        @(Model.AgeLimit > 0 ? $"{Model.AgeLimit}+" : "Bez limite")
+                    </div>
+                </div>
+                <div class="ze-stat-card">
+                    <div class="stat-label">Trajanje</div>
+                    <div class="stat-value">@((int)Model.Duration.TotalHours)h @Model.Duration.Minutes min</div>
+                </div>
+            </div>
+
+            <!-- Rezervacija stolova -->
+            @if (Model.IsUpcoming)
+            {
+                <div class="detail-section">
+                    <h2>Rezervacija stola</h2>
+                    @if (freeTables.Any())
+                    {
+                        <div class="tables-grid">
+                            @foreach (var table in Model.Venue.Tables)
+                            {
+                                bool isFree = freeTables.Any(ft => ft.Id == table.Id);
+                                <div class="table-card @(!isFree ? "table-taken" : "")">
+                                    <div class="table-number">Stol @table.TableNumber</div>
+                                    <div class="table-zone @(table.Zone == TableZone.VIP ? "zone-vip" : "zone-regular")">
+                                        @(table.Zone == TableZone.VIP ? "VIP" : "Regular")
+                                    </div>
+                                    <div class="table-seats">👥 @table.SeatCount mjesta</div>
+                                    <div class="table-status">@(isFree ? "✓ Slobodan" : "✗ Zauzet")</div>
+                                </div>
+                            }
+                        </div>
+
+                        <form action="/Event/Reserve" method="post" class="ze-form reservation-form">
+                            <input type="hidden" name="eventId" value="@Model.Id" />
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="ze-label">Stol</label>
+                                    <select name="tableId" class="ze-input" required>
+                                        <option value="">Odaberi stol...</option>
+                                        @foreach (var t in freeTables)
+                                        {
+                                            <option value="@t.Id">Stol @t.TableNumber — @(t.Zone == TableZone.VIP ? "VIP" : "Regular"), @t.SeatCount mjesta</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="ze-label">Broj gostiju</label>
+                                    <input type="number" name="guests" class="ze-input" min="1" max="10" placeholder="npr. 4" required />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="ze-label">Napomena (opcionalno)</label>
+                                <textarea name="note" class="ze-input" rows="2" placeholder="Posebni zahtjevi, proslava..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary-custom" style="width:100%">Pošalji rezervaciju</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="ze-alert-danger">Nema slobodnih stolova za ovaj event.</div>
+                    }
+                </div>
+            }
+
+            <!-- Recenzije -->
+            <div class="detail-section">
+                <h2>Recenzije <span class="text-muted-ze">(@Model.Reviews.Count)</span></h2>
+                @if (Model.Reviews.Any())
+                {
+                    <div class="review-avg">
+                        <span class="review-avg-score">@Model.AverageRating.ToString("F1")</span>
+                        <span class="star-rating">@(string.Concat(Enumerable.Repeat("★", (int)Math.Round(Model.AverageRating))))</span>
+                    </div>
+                    @foreach (var review in Model.Reviews.OrderByDescending(r => r.CreatedAt))
+                    {
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="review-avatar">@review.User.Initials</div>
+                                <div>
+                                    <div class="review-author">@review.User.FullName</div>
+                                    <div class="review-date">@review.CreatedAt.ToString("dd.MM.yyyy")</div>
+                                </div>
+                                <div class="star-rating review-stars">@review.Stars</div>
+                            </div>
+                            <p class="review-comment">@review.Comment</p>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted-ze">Još nema recenzija za ovaj event.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Desno: cjenik + lokacija info -->
+        <div class="event-detail-sidebar">
+            <div class="detail-section">
+                <h3>Lokacija</h3>
+                <div class="venue-mini-card">
+                    <img src="@Model.Venue.ImageUrl" alt="@Model.Venue.Name"
+                         onerror="this.src='https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=400'" />
+                    <div class="venue-mini-info">
+                        <div class="venue-mini-name">@Model.Venue.Name</div>
+                        <div class="venue-mini-addr">@Model.Venue.Address</div>
+                        <div class="venue-mini-hours">🕐 @Model.Venue.WorkingHours</div>
+                        <div class="venue-mini-phone">📞 @Model.Venue.ContactPhone</div>
+                        <a href="/Venue/Details/@Model.Venue.Id" class="btn-secondary-custom" style="display:block;text-align:center;margin-top:12px">Detalji lokacije</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <h3>Cjenik</h3>
+                <table class="ze-table" style="font-size:0.85rem">
+                    <thead>
+                        <tr><th>Artikl</th><th>Kategorija</th><th>Cijena</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Venue.PriceList)
+                        {
+                            <tr>
+                                <td>@item.ItemName</td>
+                                <td><span class="text-muted-ze">@item.Category</span></td>
+                                <td style="color:#10b981;font-weight:600">@item.Price.ToString("F2") €</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.event-detail-hero {
+    position: relative;
+    height: 420px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 32px;
+}
+
+.event-detail-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.event-detail-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0.3) 60%, transparent 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 28px 32px;
+}
+
+.event-detail-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 10px 0 8px;
+}
+
+.event-detail-venue-link a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.event-detail-venue-link a:hover { color: #7c3aed; }
+
+.event-detail-content {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+    align-items: start;
+}
+
+.event-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 4px; }
+.stat-value { font-size: 1.3rem; font-weight: 700; color: #f1f5f9; }
+.stat-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
+
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.table-card {
+    background: #12121a;
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+}
+
+.table-card.table-taken {
+    opacity: 0.4;
+    border-color: rgba(239,68,68,0.2);
+}
+
+.table-number { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; margin-bottom: 4px; }
+.table-seats { font-size: 0.78rem; color: #94a3b8; margin: 4px 0; }
+.table-status { font-size: 0.75rem; font-weight: 600; color: #10b981; }
+.table-taken .table-status { color: #ef4444; }
+
+.zone-vip { display: inline-block; padding: 2px 8px; border-radius: 10px; background: rgba(124,58,237,0.2); color: #7c3aed; font-size: 0.7rem; font-weight: 600; }
+.zone-regular { display: inline-block; padding: 2px 8px; border-radius: 10px; background: rgba(6,182,212,0.15); color: #06b6d4; font-size: 0.7rem; font-weight: 600; }
+
+.reservation-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { margin-bottom: 16px; }
+
+.review-avg { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.review-avg-score { font-size: 2.5rem; font-weight: 700; color: #f59e0b; }
+.review-card { background: #12121a; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.06); }
+.review-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.review-avatar { width: 38px; height: 38px; border-radius: 50%; background: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+.review-author { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; }
+.review-date { font-size: 0.75rem; color: #64748b; }
+.review-stars { margin-left: auto; color: #f59e0b; font-size: 0.9rem; }
+.star-rating { color: #f59e0b; }
+.review-comment { color: #94a3b8; font-size: 0.9rem; margin: 0; }
+
+.venue-mini-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; margin-bottom: 12px; }
+.venue-mini-name { font-weight: 600; font-size: 1rem; color: #f1f5f9; margin-bottom: 4px; }
+.venue-mini-addr, .venue-mini-hours, .venue-mini-phone { font-size: 0.82rem; color: #94a3b8; margin-bottom: 4px; }
+
+@@media (max-width: 900px) {
+    .event-detail-content { grid-template-columns: 1fr; }
+    .event-detail-hero { height: 260px; }
+    .event-detail-title { font-size: 1.5rem; }
+    .reservation-form .form-row { grid-template-columns: 1fr; }
+}
+</style>

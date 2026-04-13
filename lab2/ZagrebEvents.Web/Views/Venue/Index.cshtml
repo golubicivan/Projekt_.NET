@@ -1,0 +1,53 @@
+@model List<Venue>
+@{
+    ViewData["Title"] = "Lokacije";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <span>Lokacije</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Lokacije</h1>
+    <p class="text-muted-ze">@Model.Count lokacija u Zagrebu</p>
+</div>
+
+<div class="venue-grid">
+    @foreach (var venue in Model)
+    {
+        <a href="/Venue/Details/@venue.Id" class="venue-card-link">
+            <div class="venue-card-ze">
+                <div class="venue-card-img">
+                    <img src="@venue.ImageUrl" alt="@venue.Name"
+                         onerror="this.src='https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=600'" />
+                    <span class="venue-type-badge">@venue.Type</span>
+                </div>
+                <div class="venue-card-body">
+                    <h3>@venue.Name</h3>
+                    <p class="text-muted-ze" style="font-size:0.85rem">📍 @venue.Address</p>
+                    <div class="venue-stats">
+                        <span>👥 Kapacitet: @venue.Capacity</span>
+                        <span>🎉 @venue.Events.Count evenata</span>
+                    </div>
+                    <p style="font-size:0.82rem;color:#64748b;margin-top:8px">🕐 @venue.WorkingHours</p>
+                </div>
+            </div>
+        </a>
+    }
+</div>
+
+<style>
+.venue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; padding: 24px 0 48px; }
+.venue-card-link { text-decoration: none; color: inherit; }
+.venue-card-ze { background: #1a1a2e; border-radius: 16px; border: 1px solid rgba(6,182,212,0.2); overflow: hidden; transition: all 0.3s ease; }
+.venue-card-ze:hover { border-color: rgba(6,182,212,0.6); box-shadow: 0 8px 32px rgba(6,182,212,0.15); transform: translateY(-4px); }
+.venue-card-img { position: relative; aspect-ratio: 16/9; overflow: hidden; }
+.venue-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+.venue-card-ze:hover .venue-card-img img { transform: scale(1.05); }
+.venue-type-badge { position: absolute; top: 10px; left: 10px; padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; background: rgba(6,182,212,0.85); color: #fff; text-transform: uppercase; }
+.venue-card-body { padding: 16px; }
+.venue-card-body h3 { font-size: 1.05rem; font-weight: 600; color: #f1f5f9; margin: 0 0 6px; }
+.venue-stats { display: flex; gap: 16px; font-size: 0.8rem; color: #64748b; margin-top: 8px; }
+</style>

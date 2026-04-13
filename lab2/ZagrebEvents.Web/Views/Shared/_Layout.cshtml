@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="hr" data-color-scheme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>@ViewData["Title"] - ZG Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-grid.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ZagrebEvents.Web.styles.css" asp-append-version="true" />
+</head>
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Glavni izbornik">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">
+                <span class="logo-zg">ZG</span> Events
+            </span>
+            <button class="sidebar-close" onclick="closeSidebar()" aria-label="Zatvori izbornik">&#x2715;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="sidebar-menu">
+                <li class="sidebar-menu-item">
+                    <a href="/Event/Index" class="sidebar-link">
+                        <span class="sidebar-icon">&#128197;</span>
+                        Lista evenata
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="/Venue/Index" class="sidebar-link">
+                        <span class="sidebar-icon">&#128205;</span>
+                        Lokacije
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="/Reservation/Index" class="sidebar-link">
+                        <span class="sidebar-icon">&#128203;</span>
+                        Rezervacije
+                    </a>
+                </li>
+                <li class="sidebar-menu-divider"></li>
+                <li class="sidebar-menu-item">
+                    <a href="/User/Details/1" class="sidebar-link">
+                        <span class="sidebar-icon">&#128100;</span>
+                        Moj profil
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p class="sidebar-footer-text">ZG Events &copy; 2026</p>
+        </div>
+    </aside>
+
+    <!-- Navbar -->
+    <header class="ze-navbar" role="banner">
+        <div class="ze-navbar-inner">
+            <a href="/" class="ze-navbar-logo" aria-label="ZG Events - Početna">
+                <span class="logo-zg">ZG</span> Events
+            </a>
+            <button class="ze-hamburger" id="hamburgerBtn" onclick="openSidebar()" aria-label="Otvori izbornik" aria-expanded="false" aria-controls="sidebar">
+                &#9776;
+            </button>
+        </div>
+    </header>
+
+    <!-- Breadcrumbs -->
+    <div class="ze-breadcrumbs-wrapper">
+        <div class="container-fluid ze-breadcrumbs-container">
+            @RenderSection("Breadcrumbs", required: false)
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <main class="ze-main" role="main">
+        <div class="container-fluid ze-content-wrapper">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="ze-footer" role="contentinfo">
+        <div class="ze-footer-inner">
+            <p class="ze-footer-copy">&copy; 2026 ZG Events. Sva prava pridržana.</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const btn = document.getElementById('hamburgerBtn');
+            sidebar.classList.add('sidebar--open');
+            overlay.classList.add('sidebar-overlay--visible');
+            btn.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('sidebar-active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const btn = document.getElementById('hamburgerBtn');
+            sidebar.classList.remove('sidebar--open');
+            overlay.classList.remove('sidebar-overlay--visible');
+            btn.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('sidebar-active');
+        }
+
+        // Zatvori sidebar pritiskom na Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+        });
+
+        // Page fade-in animacija
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.classList.add('page-loaded');
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

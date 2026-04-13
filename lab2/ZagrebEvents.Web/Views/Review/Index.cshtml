@@ -1,0 +1,47 @@
+@model List<Review>
+@{
+    ViewData["Title"] = "Recenzije";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <span>Recenzije</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Recenzije</h1>
+    <p class="text-muted-ze">@Model.Count recenzija · Prosječna ocjena: <span style="color:#f59e0b;font-weight:700">@(Model.Any() ? Model.Average(r => r.Rating).ToString("F1") : "—")</span></p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;padding:24px 0">
+    @foreach (var review in Model.OrderByDescending(r => r.CreatedAt))
+    {
+        <div class="review-card">
+            <div class="review-header">
+                <div class="review-avatar">@review.User.Initials</div>
+                <div>
+                    <div class="review-author">@review.User.FullName</div>
+                    <div class="review-date">@review.CreatedAt.ToString("dd.MM.yyyy")</div>
+                </div>
+                <div class="star-rating review-stars">@review.Stars</div>
+            </div>
+            <p class="review-comment">@review.Comment</p>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05)">
+                <a href="/Event/Details/@review.Event.Id" style="color:#7c3aed;font-size:0.82rem;text-decoration:none">
+                    @review.Event.TypeIcon @review.Event.Name
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+.review-card { background: #12121a; border-radius: 12px; padding: 18px; border: 1px solid rgba(255,255,255,0.06); }
+.review-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.review-avatar { width: 40px; height: 40px; border-radius: 50%; background: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+.review-author { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; }
+.review-date { font-size: 0.75rem; color: #64748b; }
+.review-stars { margin-left: auto; color: #f59e0b; font-size: 0.95rem; }
+.review-comment { color: #94a3b8; font-size: 0.9rem; margin: 0; line-height: 1.5; }
+</style>

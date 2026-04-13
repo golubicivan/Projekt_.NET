@@ -1,0 +1,242 @@
+@model List<Venue>
+@{
+    ViewData["Title"] = "Zagreb Events - Karta";
+    Layout = "_Layout";
+}
+
+<div class="map-page">
+    <div id="map"></div>
+
+    <div class="map-legend">
+        <div class="legend-title">Tip eventa</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#7c3aed">🪩</span> DJ Noć</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#ef4444">🎤</span> Koncert</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b">📖</span> Pub Quiz</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#f97316">🎪</span> Festival</div>
+    </div>
+</div>
+
+@section Scripts {
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const venues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(v => new {
+        id = v.Id,
+        name = v.Name,
+        address = v.Address,
+        lat = v.Latitude,
+        lng = v.Longitude,
+        type = v.Type.ToString(),
+        upcomingEvent = v.Events
+            .Where(e => e.StartTime > DateTime.Now)
+            .OrderBy(e => e.StartTime)
+            .Select(e => new {
+                id = e.Id,
+                name = e.Name,
+                typeIcon = e.TypeIcon,
+                typeColor = e.TypeColor,
+                typeLabel = e.TypeLabel,
+                posterUrl = e.PosterUrl,
+                startTime = e.StartTime.ToString("dd.MM.yyyy HH:mm"),
+                entryPrice = e.EntryPrice,
+                ageLimit = e.AgeLimit
+            })
+            .FirstOrDefault()
+    })));
+
+    const map = L.map('map', { zoomControl: false }).setView([45.815, 15.982], 13);
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        maxZoom: 19
+    }).addTo(map);
+
+    const typeColors = {
+        DJNight: '#7c3aed',
+        Concert: '#ef4444',
+        PubQuiz: '#f59e0b',
+        Festival: '#f97316'
+    };
+
+    venues.forEach(venue => {
+        if (!venue.upcomingEvent) return;
+
+        const ev = venue.upcomingEvent;
+        const color = ev.typeColor;
+
+        const markerHtml = `
+            <div class="custom-pin" style="--pin-color:${color}">
+                <div class="pin-glow"></div>
+                <div class="pin-circle">
+                    <span class="pin-icon">${ev.typeIcon}</span>
+                </div>
+                <div class="pin-tooltip">
+                    <img src="${ev.posterUrl}" alt="${ev.name}" onerror="this.src='https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=200'"/>
+                    <div class="pin-tooltip-name">${venue.name}</div>
+                </div>
+            </div>
+        `;
+
+        const icon = L.divIcon({
+            html: markerHtml,
+            className: '',
+            iconSize: [52, 52],
+            iconAnchor: [26, 26]
+        });
+
+        const marker = L.marker([venue.lat, venue.lng], { icon }).addTo(map);
+
+        marker.on('click', () => {
+            window.location.href = `/Event/Details/${ev.id}`;
+        });
+    });
+</script>
+}
+
+<style>
+.map-page {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+.map-legend {
+    position: absolute;
+    bottom: 40px;
+    left: 20px;
+    background: rgba(18, 18, 26, 0.92);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 12px;
+    padding: 14px 18px;
+    z-index: 1000;
+    backdrop-filter: blur(8px);
+}
+
+.legend-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #64748b;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    margin-bottom: 6px;
+}
+
+.legend-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+/* Pin stilovi */
+.custom-pin {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    cursor: pointer;
+}
+
+.pin-glow {
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 20px;
+    background: radial-gradient(ellipse, var(--pin-color) 0%, transparent 70%);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.pin-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--pin-color);
+    border: 3px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.custom-pin:hover .pin-circle {
+    transform: scale(1.15);
+    box-shadow: 0 6px 24px var(--pin-color);
+}
+
+.pin-tooltip {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #12121a;
+    border: 1px solid rgba(124,58,237,0.4);
+    border-radius: 10px;
+    padding: 6px;
+    width: 130px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.custom-pin:hover .pin-tooltip {
+    opacity: 1;
+}
+
+.pin-tooltip img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: block;
+}
+
+.pin-tooltip-name {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 5px;
+    padding: 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.leaflet-control-zoom a {
+    background: #1a1a2e !important;
+    color: #f1f5f9 !important;
+    border-color: rgba(124,58,237,0.4) !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background: #7c3aed !important;
+}
+</style>
