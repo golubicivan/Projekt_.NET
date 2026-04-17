@@ -27,10 +27,11 @@
                 <div class="star-rating review-stars">@review.Stars</div>
             </div>
             <p class="review-comment">@review.Comment</p>
-            <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05)">
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
                 <a href="/Event/Details/@review.Event.Id" style="color:#7c3aed;font-size:0.82rem;text-decoration:none">
                     @review.Event.TypeIcon @review.Event.Name
                 </a>
+                <a href="/Review/Details/@review.Id" style="color:#94a3b8;font-size:0.78rem;text-decoration:none">Detalji →</a>
             </div>
         </div>
     }
