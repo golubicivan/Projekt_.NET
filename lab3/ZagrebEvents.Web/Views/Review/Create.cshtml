@@ -1,0 +1,90 @@
+@model Review
+@{
+    ViewData["Title"] = "Nova recenzija";
+    var ev = ViewBag.Event as Event;
+    var events = ViewBag.Events as List<Event> ?? new List<Event>();
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/recenzije">Recenzije</a> › <span>Nova recenzija</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Napiši recenziju</h1>
+    @if (ev != null)
+    {
+        <p class="text-muted-ze">Recenziraš: <strong>@ev.TypeIcon @ev.Name</strong></p>
+    }
+</div>
+
+<form asp-action="Create" asp-controller="Review" method="post" class="ze-form" style="max-width:700px">
+    @Html.AntiForgeryToken()
+
+    @if (ev == null)
+    {
+        <div class="form-group">
+            <label asp-for="EventId" class="ze-label">Event</label>
+            <select asp-for="EventId" class="ze-input" required>
+                <option value="">Odaberi event...</option>
+                @foreach (var e in events)
+                {
+                    <option value="@e.Id">@e.TypeIcon @e.Name (@e.StartTime.ToString("dd.MM.yyyy"))</option>
+                }
+            </select>
+        </div>
+    }
+    else
+    {
+        <input type="hidden" asp-for="EventId" />
+    }
+
+    <div class="form-group">
+        <label asp-for="Rating" class="ze-label">Ocjena (1-5 zvjezdica)</label>
+        <div class="rating-stars">
+            @for (int i = 1; i <= 5; i++)
+            {
+                <label class="rating-label">
+                    <input type="radio" asp-for="Rating" value="@i" required />
+                    <span class="star">★</span>
+                </label>
+            }
+        </div>
+        <span asp-validation-for="Rating" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Comment" class="ze-label">Komentar</label>
+        <textarea asp-for="Comment" class="ze-input" rows="5" placeholder="Tvoja iskustva i dojmovi..." required></textarea>
+        <span asp-validation-for="Comment" class="text-danger"></span>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Pošalji recenziju</button>
+        @if (ev != null)
+        {
+            <a href="/event/@ev.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+        }
+        else
+        {
+            <a href="/recenzije" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+        }
+    </div>
+</form>
+
+<style>
+.rating-stars { display: flex; gap: 6px; flex-direction: row-reverse; justify-content: flex-end; }
+.rating-label { cursor: pointer; }
+.rating-label input { display: none; }
+.rating-label .star { font-size: 2rem; color: #475569; transition: color 0.15s; }
+.rating-label:hover .star,
+.rating-label:hover ~ .rating-label .star,
+.rating-label input:checked ~ .star,
+.rating-stars:has(input:checked) .rating-label .star { color: #f59e0b; }
+.rating-stars .rating-label:has(input:checked) ~ .rating-label .star { color: #475569; }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

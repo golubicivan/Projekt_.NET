@@ -1,0 +1,351 @@
+# Lab 2 — Kompletni log sesije s AI agentom
+
+## Informacije o sesiji
+- **Datum:** 13.04.2026. — 15.04.2026.
+- **AI Agent:** Claude (Opus 4.6)
+- **Alat:** Claude Code CLI
+- **Projekt:** ZagrebEvents — Lab 2 (ASP.NET MVC)
+- **Repozitorij:** github.com/golubicivan/Projekt_.NET
+- **Branch:** claude/confident-sinoussi
+
+---
+
+## Faza 1: Evaluacija Lab 1
+
+### Interakcija 1 — Ocjena projekta
+**Korisnik:** "kako ocjenujes projekt"
+**Agent:** Pregledao sve datoteke projekta Lab 1 (Program.cs — 634 linija, Event.cs, Venue.cs, User.cs, Reservation.cs, Review.cs, Table.cs, PriceListItem.cs, Enums.cs). Dao ocjenu:
+- **Snage:** dobar domain model, computed properties (expression-bodied members), 15 raznolikih LINQ upita, korištenje enumova
+- **Nedostaci:** nema nullable anotacija, Program.cs prevelika (sav kod u jednoj datoteci), nema null provjera ni validacije
+- **Ocjena:** ~8/10 za lab zadatak
+
+### Interakcija 2 — Provjera ispunjenosti Lab 1 zadatka
+**Korisnik:** Priložio PDF zadatka (Lab-1 (1).pdf) i pitao je li zadatak ispravno ispunjen
+**Agent:** Pročitao PDF, napravio detaljnu usporedbu:
+- Objektni model: ISPUNJENO (7 klasa, 4 kompleksne, 5 enumova, DateTime, 1-N i N-N relacije)
+- Punjenje podataka: ISPUNJENO (3 glavna objekta s razgranatim podacima)
+- LINQ upiti: ISPUNJENO (15 smislenih upita razne složenosti)
+- Upozorenja: folder `lab1` umjesto `lab-1`, provjera roka i javnosti GitHub repozitorija
+
+### Interakcija 3 — Pokretanje AI agent loga
+**Korisnik:** "mozes li voditi od sad pa na dalje log koristenja ai agenta"
+**Agent:** Kreirao `lab1/ai-agent-log.md` za praćenje svih budućih interakcija.
+
+---
+
+## Faza 2: Planiranje Lab 2
+
+### Interakcija 4 — Prijem Lab 2 zadatka
+**Korisnik:** Priložio PDF zadatka (Lab_2_HTMLBinding.pdf) i zatražio nadogradnju Lab 1 projekta u ASP.NET MVC web aplikaciju. Napomenuo: "bud pazljiv i pitaj me za svaku i naj manju sitnicu koja te zanima"
+**Agent:** Pročitao PDF sa svim zahtjevima. Postavio 15+ pitanja o detaljima implementacije:
+1. Jedna ili više projekata?
+2. Koje entitete prikazati na Index/Details?
+3. Kakav home page?
+4. Koji stil/tema?
+5. Hamburger menu sadržaj?
+6. Karta — koji provider?
+7. Pin ikonice?
+8. Što se dogodi na klik pina?
+9. Hrvatski ili engleski UI?
+10. Breadcrumbs format?
+11-15. Detalji o karticama, formama, recenzijama...
+
+### Interakcija 5 — Korisnikovi odgovori na pitanja
+**Korisnik:** Odgovorio detaljno na sva pitanja:
+- **Jedan projekt** u `lab2/ZagrebEvents.Web`
+- **Sve entity stranice**: Index + Details za Event, Venue, User, Reservation, Review
+- **Home page**: Google Maps-like sučelje s Leaflet.js + OpenStreetMap
+- **Tamna tema** (dark mode), bez space animacije
+- **Pin ikonice**: DJ=🪩 (disko kugla), Koncert=🎤, Quiz=📖, Festival=🎪
+- **Klik na pin**: otvara Event Details stranicu (prvi nadolazeći event za taj venue)
+- **Hamburger sidebar**: lista evenata + "Moj profil" sekcija s rezervacijama i najdražim venueima
+- **Kartice** za prikaz evenata i venueova
+- **Hrvatski UI**
+- Detalji eventa: hero slika, statistike, forma za rezervaciju, recenzije, sidebar s venue info + cjenik
+
+---
+
+## Faza 3: Implementacija
+
+### Korak 1 — UX Sub-agent instruction file
+**Agent:** Kreirao `.claude/agents/ux-agent.md` (118 linija) s kompletnim design systemom:
+- **Paleta boja:** `#0a0a0f` pozadina, `#7c3aed` ljubičasta akcent, `#06b6d4` cyan
+- **Tipografija:** Inter (Google Fonts), definirane veličine za h1/h2/body/meta
+- **Komponente:** navbar, kartice, pinovi, breadcrumbs, gumbi, forme, tablice, recenzije
+- **Layout principi:** mobile-first, karta 100vh, card grid auto-fill, 8px spacing grid
+- **Animacije:** fade-in, card hover translateY, pin hover scale, sidebar slide-in
+
+### Korak 2 — ASP.NET MVC projekt
+**Agent:** Kreirao kompletnu strukturu projekta `lab2/ZagrebEvents.Web/`:
+
+#### Model klase (kopirane iz Lab 1, proširene):
+- `Models/Event.cs` — dodani computed propertyji: `TypeIcon`, `TypeColor`, `TypeLabel`, `IsUpcoming`, `IsActive`, `Duration`, `AverageRating`
+- `Models/Venue.cs` — dodana metoda `AvailableTablesCount(int eventId)`
+- `Models/User.cs` — dodani: `FullName`, `Age`, `IsAdult`, `Initials`
+- `Models/Reservation.cs` — dodani: `StatusLabel` (hrvatski), `StatusColor`, `IsConfirmed`
+- `Models/Review.cs` — dodan: `Stars` property (★★★★☆ string)
+- `Models/Table.cs`, `Models/PriceListItem.cs`, `Models/Enums.cs`
+
+#### Mock Repositories:
+- `Repositories/MockData.cs` — static klasa sa static konstruktorom, sadrži:
+  - 6 korisnika (Ivan, Ana, Marko, Petra, Luka admin, Karlo maloljetnik)
+  - 3 venuea (Club Culture, Kavana Lav, Park Stage Bundek) s GPS koordinatama
+  - 11 stolova raspoređenih po venueima (Regular + VIP zone)
+  - 13 stavki cjenika po venueima
+  - 9 evenata (3 po venueu, razni tipovi)
+  - 5 rezervacija s raznim statusima
+  - 5 recenzija s ocjenama 3-5
+  - Favorite venueovi za korisnike
+  - Sve međusobno povezano referencama (relacije)
+
+- `Repositories/VenueMockRepository.cs` — GetAll(), GetById(int id)
+- `Repositories/EventMockRepository.cs` — GetAll(), GetById(int id)
+- `Repositories/UserMockRepository.cs` — GetAll(), GetById(int id)
+- `Repositories/ReservationMockRepository.cs` — GetAll(), GetById(int id)
+- `Repositories/ReviewMockRepository.cs` — GetAll(), GetById(int id)
+
+#### Controllers:
+- `Controllers/HomeController.cs` — Index() s VenueMockRepository DI
+- `Controllers/EventController.cs` — Index(), Details(int id), Reserve (HttpPost mock)
+- `Controllers/VenueController.cs` — Index(), Details(int id)
+- `Controllers/UserController.cs` — Index(), Details(int id)
+- `Controllers/ReservationController.cs` — Index(), Details(int id)
+- `Controllers/ReviewController.cs` — Index(), Details(int id)
+
+#### Program.cs — DI registracija:
+```csharp
+builder.Services.AddSingleton<VenueMockRepository>();
+builder.Services.AddSingleton<EventMockRepository>();
+builder.Services.AddSingleton<UserMockRepository>();
+builder.Services.AddSingleton<ReservationMockRepository>();
+builder.Services.AddSingleton<ReviewMockRepository>();
+```
+Routing: `{controller=Home}/{action=Index}/{id?}`
+
+### Korak 3 — UX Sub-agent spawnan
+**Agent:** Pozvao Zagreb Events UX Agent (definirani u `.claude/agents/ux-agent.md`) za kreiranje layout i CSS datoteka.
+
+**UX Sub-agent kreirao:**
+- `Views/Shared/_Layout.cshtml` — kompletni layout:
+  - Sidebar s overlay-em (slide-in s desne strane)
+  - Menu: Lista evenata, Lokacije, Rezervacije, Moj profil
+  - Navbar fiksiran na vrhu s hamburger ikonom
+  - Breadcrumbs wrapper
+  - Footer
+  - JavaScript: openSidebar(), closeSidebar(), Escape key listener, page fade-in
+
+- `wwwroot/css/site.css` — kompletni custom dark theme:
+  - CSS varijable (:root) za sve boje, fontove, spacing
+  - Navbar s backdrop-filter blur
+  - Sidebar animacija (transform: translateX)
+  - Card komponente s hover efektima
+  - Pin stilovi za Leaflet.js
+  - Tablica stilovi
+  - Forma stilovi
+  - Breadcrumb stilovi
+  - Hero sekcija stilovi
+  - Review kartice
+  - Responsive breakpoints
+  - Page fade-in animacija
+
+### Korak 4 — Razor Views
+
+#### Home/Index.cshtml — Interaktivna karta
+- Leaflet.js CDN (CSS + JS)
+- CartoDB dark tiles: `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png`
+- C# podaci serijalizirani u JSON: `@Html.Raw(System.Text.Json.JsonSerializer.Serialize(...))`
+- Za svaki venue: uzima nearest upcoming event (`Where(e => e.IsUpcoming).OrderBy(e => e.StartTime).FirstOrDefault()`)
+- Custom `L.divIcon` markeri s emoji ikonama po tipu eventa
+- Hover tooltip: poster slika + venue naziv
+- Glow efekt: radial-gradient ispod pina
+- Klik navigira na `/Event/Details/{id}`
+- Legenda u donjem lijevom kutu karte
+- Karta zauzima ~calc(100vh - 60px)
+
+#### Event/Index.cshtml — Lista evenata
+- `@model List<ZagrebEvents.Web.Models.Event>`
+- Card grid layout (auto-fill, minmax 300px)
+- Svaka kartica: poster slika, tip badge, venue linkm datum, cijena, dobna granica
+- Breadcrumbs: Početna > Eventi
+
+#### Event/Details.cshtml — Detalji eventa
+- Hero slika (420px) s gradient overlayem + naslov + badge
+- 4-cell stat grid: datum, cijena, dobna granica, trajanje
+- Sekcija stolova: grid prikaz svih stolova venuea s brojem mjesta i zonom
+- Forma za rezervaciju (POST na `/Event/Reserve`): odabir stola, broj gostiju, napomena
+- TempData["ReservationSuccess"] poruka nakon submita
+- Sekcija recenzija sa star ratingom
+- Sidebar: venue mini-kartica + cjenik tablica
+
+#### Venue/Index.cshtml — Lista lokacija
+- Card grid s cyan akcentom
+- Svaka kartica: slika, naziv, adresa, kapacitet, tip badge
+
+#### Venue/Details.cshtml — Detalji lokacije
+- Hero + info grid
+- Upcoming eventi lista + past eventi lista
+- Stolovi grid
+- Cjenik tablica
+
+#### User/Index.cshtml — Lista korisnika
+- Tablica s avatar inicijali, role badge (Admin/Owner/Guest), age warning za maloljetnike
+
+#### User/Details.cshtml — Korisnički profil
+- Veliki avatar s inicijalima
+- Info grid (email, telefon, datum registracije, godine)
+- Popis rezervacija korisnika
+- Popis recenzija korisnika
+- Najdraži venueovi
+
+#### Reservation/Index.cshtml — Lista rezervacija
+- Tablica s kolonama: event, korisnik, stol, gosti, status badge, datum
+
+#### Reservation/Details.cshtml — Detalji rezervacije
+- Dva stupca: lijevo detalji (tablica), desno event kartica
+
+#### Review/Index.cshtml — Lista recenzija
+- Card grid sa star ratingom, komentarom, korisnikom, eventom
+
+#### Review/Details.cshtml — Detalji recenzije
+- Kompletna recenzija s linkom na event
+
+---
+
+## Faza 4: Build i testiranje
+
+### Build rezultat
+```
+Build succeeded.
+25 Warning(s) — CS8618 (non-nullable property warnings)
+0 Error(s)
+```
+Svi warningovi su `CS8618` — non-nullable string propertyji bez inicijalizacije u konstruktoru. To su samo upozorenja, ne greške. Isti pattern kao u Lab 1.
+
+### Pokretanje
+```powershell
+cd lab2/ZagrebEvents.Web
+dotnet run
+# → Now listening on: http://localhost:5053
+```
+
+---
+
+## Faza 5: Git i deployment
+
+### Commitovi na branch `claude/confident-sinoussi`:
+1. `6b2a4f8` — Add Lab 2 ASP.NET MVC web application (ZagrebEvents.Web)
+   - Dodao `.gitignore` (isključuje bin/, obj/)
+   - Dodao `.claude/agents/ux-agent.md`
+   - Ažurirao `lab1/ai-agent-log.md`
+   - Dodao kompletni `lab2/ZagrebEvents.Web/` (107 datoteka)
+
+### Push na remote
+```
+→ origin/claude/confident-sinoussi (pushed successfully)
+```
+
+### PR
+- `gh` CLI nije instaliran — PR treba kreirati ručno na GitHubu
+- Potrebno mergati u `main` branch (zahtjev iz PDF-a)
+
+---
+
+## Provjera zahtjeva iz PDF-a
+
+| Zahtjev | Status |
+|---------|--------|
+| Prompt za sub-agenta za UI/UX (1 bod) | ISPUNJENO — `.claude/agents/ux-agent.md` |
+| Log da je sub-agent pozivan (1 bod) | ISPUNJENO — `ai-agent-log.md`, Interakcija 7 |
+| Unique UX s mock repo (2 boda) | ISPUNJENO — custom dark theme, Leaflet.js karta |
+| Kod na GH, default branch | DJELOMICNO — treba merge u main |
+| Agent instruction file committano | ISPUNJENO |
+| Mock repository sa statičkim podacima iz Lab 1 | ISPUNJENO |
+| Index za svaki entitet | ISPUNJENO (5 entiteta) |
+| Details za svaki entitet | ISPUNJENO (5 entiteta) |
+| Custom home page | ISPUNJENO (Leaflet.js karta) |
+| Kompletna navigacija | ISPUNJENO (sidebar, breadcrumbs, linkovi) |
+| UX non-standard | ISPUNJENO (custom CSS, no default Bootstrap) |
+
+---
+
+## Kreirana struktura datoteka
+
+```
+lab2/ZagrebEvents.Web/
+├── Controllers/
+│   ├── EventController.cs
+│   ├── HomeController.cs
+│   ├── ReservationController.cs
+│   ├── ReviewController.cs
+│   ├── UserController.cs
+│   └── VenueController.cs
+├── Models/
+│   ├── Enums.cs
+│   ├── ErrorViewModel.cs
+│   ├── Event.cs
+│   ├── PriceListItem.cs
+│   ├── Reservation.cs
+│   ├── Review.cs
+│   ├── Table.cs
+│   ├── User.cs
+│   └── Venue.cs
+├── Repositories/
+│   ├── EventMockRepository.cs
+│   ├── MockData.cs
+│   ├── ReservationMockRepository.cs
+│   ├── ReviewMockRepository.cs
+│   ├── UserMockRepository.cs
+│   └── VenueMockRepository.cs
+├── Views/
+│   ├── Event/
+│   │   ├── Details.cshtml
+│   │   └── Index.cshtml
+│   ├── Home/
+│   │   ├── Index.cshtml
+│   │   └── Privacy.cshtml
+│   ├── Reservation/
+│   │   ├── Details.cshtml
+│   │   └── Index.cshtml
+│   ├── Review/
+│   │   ├── Details.cshtml
+│   │   └── Index.cshtml
+│   ├── Shared/
+│   │   ├── Error.cshtml
+│   │   ├── _Layout.cshtml
+│   │   ├── _Layout.cshtml.css
+│   │   └── _ValidationScriptsPartial.cshtml
+│   ├── User/
+│   │   ├── Details.cshtml
+│   │   └── Index.cshtml
+│   ├── Venue/
+│   │   ├── Details.cshtml
+│   │   └── Index.cshtml
+│   ├── _ViewImports.cshtml
+│   └── _ViewStart.cshtml
+├── wwwroot/
+│   ├── css/site.css
+│   ├── js/site.js
+│   ├── favicon.ico
+│   └── lib/ (bootstrap, jquery, jquery-validation)
+├── Program.cs
+├── ZagrebEvents.Web.csproj
+├── appsettings.json
+└── appsettings.Development.json
+
+.claude/agents/ux-agent.md
+lab1/ai-agent-log.md (ažuriran)
+.gitignore (novi)
+```
+
+---
+
+## Ključne tehnologije korištene
+- **ASP.NET Core MVC** (.NET 8.0)
+- **Razor Views** (.cshtml) s `@model`, `@foreach`, `@if`, `@section`, `@Html.Raw`
+- **Dependency Injection** (AddSingleton u Program.cs)
+- **Mock Repository pattern** (statički podaci, bez baze)
+- **Leaflet.js** + OpenStreetMap (CartoDB dark tiles) za interaktivnu kartu
+- **Custom CSS** dark theme (CSS varijable, grid, flexbox, animacije)
+- **System.Text.Json** za serijalizaciju C# → JavaScript
+- **TempData** za poruke nakon POST redirecta
+- **Inter font** (Google Fonts)

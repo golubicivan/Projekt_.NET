@@ -1,0 +1,47 @@
+@model List<Reservation>
+@{
+    ViewData["Title"] = "Rezervacije";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <span>Rezervacije</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Rezervacije</h1>
+    <p class="text-muted-ze">@Model.Count ukupnih rezervacija</p>
+</div>
+
+<table class="ze-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Korisnik</th>
+            <th>Event</th>
+            <th>Stol</th>
+            <th>Gosti</th>
+            <th>Min. potrošnja</th>
+            <th>Status</th>
+            <th>Kreirano</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var res in Model.OrderByDescending(r => r.CreatedAt))
+        {
+            <tr>
+                <td class="text-muted-ze">#@res.Id</td>
+                <td style="font-weight:600;color:#f1f5f9">@res.User.FullName</td>
+                <td><a href="/Event/Details/@res.Event.Id" style="color:#7c3aed;text-decoration:none">@res.Event.Name</a></td>
+                <td class="text-muted-ze">Stol @res.Table?.TableNumber (@res.Table?.Zone)</td>
+                <td class="text-muted-ze">@res.NumberOfGuests 👥</td>
+                <td style="color:#10b981;font-weight:600">@(res.MinimumSpending == 0 ? "—" : $"{res.MinimumSpending:F2} €")</td>
+                <td><span style="color:@res.StatusColor;font-weight:600">@res.StatusLabel</span></td>
+                <td class="text-muted-ze">@res.CreatedAt.ToString("dd.MM.yyyy")</td>
+                <td><a href="/Reservation/Details/@res.Id" class="btn-secondary-custom" style="padding:5px 12px;font-size:0.8rem">Detalji</a></td>
+            </tr>
+        }
+    </tbody>
+</table>
