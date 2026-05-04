@@ -16,6 +16,7 @@ namespace ZagrebEvents.Web.Controllers
 
         // CUSTOM ROUTE: /recenzije (i default /Review/Index)
         [Route("recenzije")]
+        [Route("[controller]/[action]")]
         public IActionResult Index()
         {
             var reviews = _db.Reviews

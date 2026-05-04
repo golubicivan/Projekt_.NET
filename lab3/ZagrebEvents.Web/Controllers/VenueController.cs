@@ -15,6 +15,7 @@ namespace ZagrebEvents.Web.Controllers
 
         // CUSTOM ROUTE: /lokacije (i default /Venue/Index)
         [Route("lokacije")]
+        [Route("[controller]/[action]")]
         public IActionResult Index()
         {
             var venues = _db.Venues
@@ -25,6 +26,7 @@ namespace ZagrebEvents.Web.Controllers
 
         // CUSTOM ROUTE: /lokacija/{id} (i default /Venue/Details/{id})
         [Route("lokacija/{id:int}")]
+        [Route("[controller]/[action]/{id:int}")]
         public IActionResult Details(int id)
         {
             var venue = _db.Venues

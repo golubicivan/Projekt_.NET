@@ -15,6 +15,7 @@ namespace ZagrebEvents.Web.Controllers
 
         // CUSTOM ROUTE: /korisnici (i default /User/Index)
         [Route("korisnici")]
+        [Route("[controller]/[action]")]
         public IActionResult Index()
         {
             var users = _db.Users.OrderBy(u => u.LastName).ToList();

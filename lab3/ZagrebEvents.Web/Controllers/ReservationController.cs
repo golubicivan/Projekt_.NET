@@ -16,6 +16,7 @@ namespace ZagrebEvents.Web.Controllers
 
         // CUSTOM ROUTE: /rezervacije (i default /Reservation/Index)
         [Route("rezervacije")]
+        [Route("[controller]/[action]")]
         public IActionResult Index()
         {
             var reservations = _db.Reservations

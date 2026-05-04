@@ -16,6 +16,7 @@ namespace ZagrebEvents.Web.Controllers
 
         // CUSTOM ROUTE: /eventi (i default /Event/Index)
         [Route("eventi")]
+        [Route("[controller]/[action]")]
         public IActionResult Index()
         {
             var events = _db.Events
@@ -28,6 +29,7 @@ namespace ZagrebEvents.Web.Controllers
 
         // CUSTOM ROUTE: /event/{id} (i default /Event/Details/{id})
         [Route("event/{id:int}")]
+        [Route("[controller]/[action]/{id:int}")]
         public IActionResult Details(int id)
         {
             var ev = _db.Events
