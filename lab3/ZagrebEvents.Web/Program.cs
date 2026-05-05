@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using ZagrebEvents.DAL;
 
@@ -11,6 +12,18 @@ builder.Services.AddDbContext<ZagrebEventsDbContext>(options =>
         builder.Configuration.GetConnectionString("ZagrebEventsDbContext"),
         opt => opt.MigrationsAssembly("ZagrebEvents.DAL")));
 
+// Cookie Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -22,6 +35,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseAuthentication();   // PRIJE UseAuthorization
 app.UseAuthorization();
 
 app.MapControllerRoute(

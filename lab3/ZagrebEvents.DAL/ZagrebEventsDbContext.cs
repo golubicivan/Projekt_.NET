@@ -76,14 +76,14 @@ namespace ZagrebEvents.DAL
 
             // ====== SEED PODACI ======
 
-            // KORISNICI
+            // KORISNICI (lozinke u plain textu - prototip; u produkciji bi se hasirale)
             modelBuilder.Entity<User>().HasData(
-                new User { Id = 1, FirstName = "Ivan", LastName = "Golubić", DateOfBirth = new DateTime(2003, 5, 15), Email = "ivan.golubic@email.com", PhoneNumber = "+385911234567", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 1, 10) },
-                new User { Id = 2, FirstName = "Ana", LastName = "Horvat", DateOfBirth = new DateTime(2001, 8, 22), Email = "ana.horvat@email.com", PhoneNumber = "+385917654321", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 2, 5) },
-                new User { Id = 3, FirstName = "Marko", LastName = "Kovačević", DateOfBirth = new DateTime(1990, 3, 10), Email = "marko.kovacevic@email.com", PhoneNumber = "+385921112233", Role = UserRole.Owner, RegisteredAt = new DateTime(2025, 11, 1) },
-                new User { Id = 4, FirstName = "Petra", LastName = "Babić", DateOfBirth = new DateTime(2000, 12, 1), Email = "petra.babic@email.com", PhoneNumber = "+385998887766", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 3, 1) },
-                new User { Id = 5, FirstName = "Luka", LastName = "Perić", DateOfBirth = new DateTime(1985, 7, 20), Email = "luka.peric@admin.com", PhoneNumber = "+385915556677", Role = UserRole.Admin, RegisteredAt = new DateTime(2025, 6, 1) },
-                new User { Id = 6, FirstName = "Karlo", LastName = "Novak", DateOfBirth = new DateTime(2010, 9, 25), Email = "karlo.novak@email.com", PhoneNumber = "+385912223344", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 3, 20) }
+                new User { Id = 1, FirstName = "Ivan", LastName = "Golubić", DateOfBirth = new DateTime(2003, 5, 15), Email = "ivan.golubic@email.com", PhoneNumber = "+385911234567", Password = "ivan123", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 1, 10) },
+                new User { Id = 2, FirstName = "Ana", LastName = "Horvat", DateOfBirth = new DateTime(2001, 8, 22), Email = "ana.horvat@email.com", PhoneNumber = "+385917654321", Password = "demo123", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 2, 5) },
+                new User { Id = 3, FirstName = "Marko", LastName = "Kovačević", DateOfBirth = new DateTime(1990, 3, 10), Email = "marko.kovacevic@email.com", PhoneNumber = "+385921112233", Password = "demo123", Role = UserRole.Owner, RegisteredAt = new DateTime(2025, 11, 1) },
+                new User { Id = 4, FirstName = "Petra", LastName = "Babić", DateOfBirth = new DateTime(2000, 12, 1), Email = "petra.babic@email.com", PhoneNumber = "+385998887766", Password = "demo123", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 3, 1) },
+                new User { Id = 5, FirstName = "Luka", LastName = "Perić", DateOfBirth = new DateTime(1985, 7, 20), Email = "luka.peric@admin.com", PhoneNumber = "+385915556677", Password = "admin123", Role = UserRole.Admin, RegisteredAt = new DateTime(2025, 6, 1) },
+                new User { Id = 6, FirstName = "Karlo", LastName = "Novak", DateOfBirth = new DateTime(2010, 9, 25), Email = "karlo.novak@email.com", PhoneNumber = "+385912223344", Password = "demo123", Role = UserRole.Guest, RegisteredAt = new DateTime(2026, 3, 20) }
             );
 
             // VENUES

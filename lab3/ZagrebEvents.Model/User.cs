@@ -22,6 +22,9 @@ namespace ZagrebEvents.Model
         [MaxLength(30)]
         public string PhoneNumber { get; set; } = "";
 
+        [Required, MaxLength(100)]
+        public string Password { get; set; } = "";
+
         public UserRole Role { get; set; }
         public DateTime RegisteredAt { get; set; }
 

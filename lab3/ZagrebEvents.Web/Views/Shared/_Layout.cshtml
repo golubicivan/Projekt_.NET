@@ -58,18 +58,50 @@
                     </a>
                 </li>
                 <li class="sidebar-menu-divider"></li>
-                <li class="sidebar-menu-item">
-                    <a href="/Event/Create" class="sidebar-link" style="color:#7c3aed">
-                        <span class="sidebar-icon">&#10133;</span>
-                        Novi event
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a href="/moj-profil" class="sidebar-link">
-                        <span class="sidebar-icon">&#128100;</span>
-                        Moj profil
-                    </a>
-                </li>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    if (User.IsInRole("Admin"))
+                    {
+                        <li class="sidebar-menu-item">
+                            <a href="/Event/Create" class="sidebar-link" style="color:#7c3aed">
+                                <span class="sidebar-icon">&#10133;</span>
+                                Novi event (Admin)
+                            </a>
+                        </li>
+                    }
+                    <li class="sidebar-menu-item">
+                        <a href="/moj-profil" class="sidebar-link">
+                            <span class="sidebar-icon">&#128100;</span>
+                            Moj profil
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item" style="padding:14px 18px;font-size:0.78rem;color:#64748b">
+                        Prijavljen kao:<br/>
+                        <strong style="color:#f1f5f9">@User.Identity.Name</strong>
+                        <span style="color:#7c3aed">(@(User.IsInRole("Admin") ? "Admin" : User.IsInRole("Owner") ? "Owner" : "Guest"))</span>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/odjava" class="sidebar-link" style="color:#ef4444">
+                            <span class="sidebar-icon">&#128682;</span>
+                            Odjava
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="sidebar-menu-item">
+                        <a href="/prijava" class="sidebar-link" style="color:#7c3aed">
+                            <span class="sidebar-icon">&#128272;</span>
+                            Prijava
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/registracija" class="sidebar-link">
+                            <span class="sidebar-icon">&#10133;</span>
+                            Registracija
+                        </a>
+                    </li>
+                }
             </ul>
         </nav>
         <div class="sidebar-footer">

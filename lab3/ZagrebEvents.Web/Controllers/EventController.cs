@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ZagrebEvents.DAL;
@@ -43,15 +46,17 @@ namespace ZagrebEvents.Web.Controllers
             return View(ev);
         }
 
-        // GET: /Event/Create
+        // GET: /Event/Create  -- SAMO ADMIN
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             ViewBag.Venues = _db.Venues.OrderBy(v => v.Name).ToList();
             return View(new Event { StartTime = DateTime.Today.AddDays(7).AddHours(20), EndTime = DateTime.Today.AddDays(7).AddHours(23) });
         }
 
-        // POST: /Event/Create
+        // POST: /Event/Create  -- SAMO ADMIN
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Event ev)
         {
@@ -67,19 +72,22 @@ namespace ZagrebEvents.Web.Controllers
             return RedirectToAction("Details", new { id = ev.Id });
         }
 
-        // POST: /Event/Reserve
+        // POST: /Event/Reserve  -- SVI PRIJAVLJENI
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public IActionResult Reserve(int eventId, int tableId, int guests, string? note)
         {
             var ev = _db.Events.Find(eventId);
             if (ev == null) return NotFound();
 
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             var reservation = new Reservation
             {
                 EventId = eventId,
                 TableId = tableId,
-                UserId = 1, // Hardcoded - u pravoj aplikaciji uzima se iz prijavljenog korisnika
+                UserId = userId,
                 NumberOfGuests = guests,
                 Note = note ?? "",
                 Status = ReservationStatus.Pending,

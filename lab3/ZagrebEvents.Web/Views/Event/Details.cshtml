@@ -92,6 +92,7 @@
                         </div>
 
                         <form action="/Event/Reserve" method="post" class="ze-form reservation-form">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="eventId" value="@Model.Id" />
                             <div class="form-row">
                                 <div class="form-group">
@@ -125,7 +126,21 @@
 
             <!-- Recenzije -->
             <div class="detail-section">
-                <h2>Recenzije <span class="text-muted-ze">(@Model.Reviews.Count)</span></h2>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h2 style="margin:0">Recenzije <span class="text-muted-ze">(@Model.Reviews.Count)</span></h2>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a href="/Review/Create?eventId=@Model.Id" class="btn-primary-custom" style="font-size:0.85rem;padding:8px 16px">
+                            ⭐ Napiši recenziju
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/prijava?returnUrl=/Event/Details/@Model.Id" class="btn-secondary-custom" style="font-size:0.85rem;padding:8px 16px">
+                            🔐 Prijavi se za recenziju
+                        </a>
+                    }
+                </div>
                 @if (Model.Reviews.Any())
                 {
                     <div class="review-avg">

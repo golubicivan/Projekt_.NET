@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ZagrebEvents.DAL;
@@ -38,7 +40,8 @@ namespace ZagrebEvents.Web.Controllers
             return View(review);
         }
 
-        // GET: /Review/Create?eventId=3
+        // GET: /Review/Create?eventId=3  -- SVI PRIJAVLJENI
+        [Authorize]
         public IActionResult Create(int? eventId)
         {
             var ev = eventId.HasValue ? _db.Events.Find(eventId.Value) : null;
@@ -47,8 +50,9 @@ namespace ZagrebEvents.Web.Controllers
             return View(new Review { EventId = eventId ?? 0, Rating = 5 });
         }
 
-        // POST: /Review/Create
+        // POST: /Review/Create  -- SVI PRIJAVLJENI
         [HttpPost]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Review review)
         {
@@ -59,7 +63,8 @@ namespace ZagrebEvents.Web.Controllers
                 return View(review);
             }
 
-            review.UserId = 1; // Hardcoded ulogiran korisnik
+            // Uzmi UserId iz prijavljenog korisnika (claim)
+            review.UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             review.CreatedAt = DateTime.Now;
             _db.Reviews.Add(review);
             _db.SaveChanges();
