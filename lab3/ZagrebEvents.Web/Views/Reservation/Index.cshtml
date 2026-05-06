@@ -1,6 +1,7 @@
 @model List<Reservation>
 @{
     ViewData["Title"] = "Rezervacije";
+    var isAdmin = User.IsInRole("Admin");
 }
 
 @section Breadcrumbs {
@@ -11,8 +12,13 @@
 
 <div class="ze-page-header">
     <h1>Rezervacije</h1>
-    <p class="text-muted-ze">@Model.Count ukupnih rezervacija</p>
+    <p class="text-muted-ze">@Model.Count ukupnih rezervacija@(isAdmin ? " · Admin može mijenjati status" : "")</p>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="ze-alert-success" style="margin-bottom:20px">✓ @TempData["Success"]</div>
+}
 
 <table class="ze-table">
     <thead>
@@ -22,10 +28,9 @@
             <th>Event</th>
             <th>Stol</th>
             <th>Gosti</th>
-            <th>Min. potrošnja</th>
             <th>Status</th>
             <th>Kreirano</th>
-            <th></th>
+            <th>Akcije</th>
         </tr>
     </thead>
     <tbody>
@@ -33,15 +38,70 @@
         {
             <tr>
                 <td class="text-muted-ze">#@res.Id</td>
-                <td style="font-weight:600;color:#f1f5f9">@res.User.FullName</td>
-                <td><a href="/Event/Details/@res.Event.Id" style="color:#7c3aed;text-decoration:none">@res.Event.Name</a></td>
+                <td style="font-weight:600;color:#f1f5f9">@res.User?.FullName</td>
+                <td><a href="/Event/Details/@res.Event?.Id" style="color:#7c3aed;text-decoration:none">@res.Event?.Name</a></td>
                 <td class="text-muted-ze">Stol @res.Table?.TableNumber (@res.Table?.Zone)</td>
                 <td class="text-muted-ze">@res.NumberOfGuests 👥</td>
-                <td style="color:#10b981;font-weight:600">@(res.MinimumSpending == 0 ? "—" : $"{res.MinimumSpending:F2} €")</td>
                 <td><span style="color:@res.StatusColor;font-weight:600">@res.StatusLabel</span></td>
                 <td class="text-muted-ze">@res.CreatedAt.ToString("dd.MM.yyyy")</td>
-                <td><a href="/Reservation/Details/@res.Id" class="btn-secondary-custom" style="padding:5px 12px;font-size:0.8rem">Detalji</a></td>
+                <td>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <a href="/Reservation/Details/@res.Id" class="btn-secondary-custom" style="padding:4px 10px;font-size:0.75rem">Detalji</a>
+                        @if (isAdmin)
+                        {
+                            @if (res.Status != ReservationStatus.Confirmed)
+                            {
+                                <form method="post" action="/Reservation/SetStatus/@res.Id" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="status" value="@((int)ReservationStatus.Confirmed)" />
+                                    <input type="hidden" name="returnUrl" value="/rezervacije" />
+                                    <button type="submit" class="btn-action btn-confirm" title="Potvrdi">✓</button>
+                                </form>
+                            }
+                            @if (res.Status != ReservationStatus.Pending)
+                            {
+                                <form method="post" action="/Reservation/SetStatus/@res.Id" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="status" value="@((int)ReservationStatus.Pending)" />
+                                    <input type="hidden" name="returnUrl" value="/rezervacije" />
+                                    <button type="submit" class="btn-action btn-pending" title="Na čekanje">⏳</button>
+                                </form>
+                            }
+                            @if (res.Status != ReservationStatus.Cancelled)
+                            {
+                                <form method="post" action="/Reservation/SetStatus/@res.Id" style="display:inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="status" value="@((int)ReservationStatus.Cancelled)" />
+                                    <input type="hidden" name="returnUrl" value="/rezervacije" />
+                                    <button type="submit" class="btn-action btn-cancel" title="Otkaži">✗</button>
+                                </form>
+                            }
+                            <a href="/Reservation/Edit/@res.Id" class="btn-action btn-edit" title="Uredi">✎</a>
+                        }
+                    </div>
+                </td>
             </tr>
         }
     </tbody>
 </table>
+
+<style>
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 6px; border: none;
+    font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; text-decoration: none;
+    transition: all 0.15s ease;
+}
+.btn-confirm { background: rgba(16,185,129,0.15); color: #10b981; }
+.btn-confirm:hover { background: #10b981; color: #fff; }
+.btn-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.btn-pending:hover { background: #f59e0b; color: #fff; }
+.btn-cancel { background: rgba(239,68,68,0.15); color: #ef4444; }
+.btn-cancel:hover { background: #ef4444; color: #fff; }
+.btn-edit { background: rgba(124,58,237,0.15); color: #7c3aed; }
+.btn-edit:hover { background: #7c3aed; color: #fff; }
+</style>

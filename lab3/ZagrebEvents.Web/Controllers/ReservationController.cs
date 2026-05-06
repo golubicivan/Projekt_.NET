@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ZagrebEvents.DAL;
@@ -40,7 +41,8 @@ namespace ZagrebEvents.Web.Controllers
             return View(reservation);
         }
 
-        // GET: /Reservation/Edit/5
+        // GET: /Reservation/Edit/5  -- SAMO ADMIN
+        [Authorize(Roles = "Admin")]
         public IActionResult Edit(int id)
         {
             var reservation = _db.Reservations
@@ -52,8 +54,9 @@ namespace ZagrebEvents.Web.Controllers
             return View(reservation);
         }
 
-        // POST: /Reservation/Edit/5
+        // POST: /Reservation/Edit/5  -- SAMO ADMIN
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, int tableId, int numberOfGuests, string? note, ReservationStatus status)
         {
@@ -68,6 +71,33 @@ namespace ZagrebEvents.Web.Controllers
             _db.SaveChanges();
             TempData["Success"] = "Rezervacija uspješno ažurirana!";
             return RedirectToAction("Details", new { id });
+        }
+
+        // POST: /Reservation/SetStatus/5  -- BRZA AKCIJA ZA ADMINA
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public IActionResult SetStatus(int id, ReservationStatus status, string? returnUrl = null)
+        {
+            var reservation = _db.Reservations.Find(id);
+            if (reservation == null) return NotFound();
+
+            reservation.Status = status;
+            _db.SaveChanges();
+
+            var label = status switch
+            {
+                ReservationStatus.Confirmed => "potvrđena",
+                ReservationStatus.Cancelled => "otkazana",
+                ReservationStatus.Pending => "vraćena na čekanje",
+                _ => "ažurirana"
+            };
+            TempData["Success"] = $"Rezervacija #{id} {label}.";
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction("Index");
         }
     }
 }

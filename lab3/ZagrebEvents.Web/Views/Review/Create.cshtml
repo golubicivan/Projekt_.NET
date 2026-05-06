@@ -41,15 +41,13 @@
     }
 
     <div class="form-group">
-        <label asp-for="Rating" class="ze-label">Ocjena (1-5 zvjezdica)</label>
-        <div class="rating-stars">
+        <label class="ze-label">Ocjena (1-5 zvjezdica)</label>
+        <div class="rating-stars" id="ratingStars">
             @for (int i = 1; i <= 5; i++)
             {
-                <label class="rating-label">
-                    <input type="radio" asp-for="Rating" value="@i" required />
-                    <span class="star">★</span>
-                </label>
+                <button type="button" class="rating-star" data-value="@i">★</button>
             }
+            <input type="hidden" asp-for="Rating" id="ratingInput" />
         </div>
         <span asp-validation-for="Rating" class="text-danger"></span>
     </div>
@@ -74,17 +72,48 @@
 </form>
 
 <style>
-.rating-stars { display: flex; gap: 6px; flex-direction: row-reverse; justify-content: flex-end; }
-.rating-label { cursor: pointer; }
-.rating-label input { display: none; }
-.rating-label .star { font-size: 2rem; color: #475569; transition: color 0.15s; }
-.rating-label:hover .star,
-.rating-label:hover ~ .rating-label .star,
-.rating-label input:checked ~ .star,
-.rating-stars:has(input:checked) .rating-label .star { color: #f59e0b; }
-.rating-stars .rating-label:has(input:checked) ~ .rating-label .star { color: #475569; }
+.rating-stars { display: flex; gap: 4px; }
+.rating-star {
+    background: none; border: none; padding: 0;
+    font-size: 2.4rem; color: #475569; cursor: pointer;
+    transition: color 0.15s, transform 0.1s;
+    line-height: 1;
+}
+.rating-star:hover { transform: scale(1.1); }
+.rating-star.active { color: #f59e0b; }
 </style>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const stars = document.querySelectorAll('#ratingStars .rating-star');
+            const input = document.getElementById('ratingInput');
+
+            function paint(value) {
+                stars.forEach(s => {
+                    s.classList.toggle('active', parseInt(s.dataset.value) <= value);
+                });
+            }
+
+            // Inicijalna boja prema modelu
+            const initial = parseInt(input.value) || 0;
+            paint(initial);
+
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = parseInt(star.dataset.value);
+                    input.value = value;
+                    paint(value);
+                });
+                star.addEventListener('mouseenter', () => {
+                    paint(parseInt(star.dataset.value));
+                });
+            });
+
+            document.getElementById('ratingStars').addEventListener('mouseleave', () => {
+                paint(parseInt(input.value) || 0);
+            });
+        })();
+    </script>
 }

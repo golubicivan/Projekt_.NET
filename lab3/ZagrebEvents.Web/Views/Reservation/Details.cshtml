@@ -1,18 +1,59 @@
 @model Reservation
 @{
     ViewData["Title"] = $"Rezervacija #{Model.Id}";
+    var isAdmin = User.IsInRole("Admin");
 }
 
 @section Breadcrumbs {
 <nav class="ze-breadcrumb">
-    <a href="/">Karta</a> › <a href="/Reservation/Index">Rezervacije</a> › <span>Rezervacija #@Model.Id</span>
+    <a href="/">Karta</a> › <a href="/rezervacije">Rezervacije</a> › <span>Rezervacija #@Model.Id</span>
 </nav>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="ze-alert-success" style="margin-bottom:20px">✓ @TempData["Success"]</div>
 }
 
 <div class="ze-page-header">
     <h1>Rezervacija #@Model.Id</h1>
     <span style="color:@Model.StatusColor;font-size:1.1rem;font-weight:600">@Model.StatusLabel</span>
 </div>
+
+@if (isAdmin)
+{
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;padding:14px;background:#12121a;border:1px solid rgba(124,58,237,0.3);border-radius:12px">
+        <span style="color:#7c3aed;font-weight:600;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;align-self:center">Admin akcije:</span>
+        @if (Model.Status != ReservationStatus.Confirmed)
+        {
+            <form method="post" action="/Reservation/SetStatus/@Model.Id" style="display:inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="status" value="@((int)ReservationStatus.Confirmed)" />
+                <input type="hidden" name="returnUrl" value="/Reservation/Details/@Model.Id" />
+                <button type="submit" class="btn-primary-custom" style="background:#10b981;padding:8px 16px;font-size:0.85rem">✓ Potvrdi</button>
+            </form>
+        }
+        @if (Model.Status != ReservationStatus.Pending)
+        {
+            <form method="post" action="/Reservation/SetStatus/@Model.Id" style="display:inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="status" value="@((int)ReservationStatus.Pending)" />
+                <input type="hidden" name="returnUrl" value="/Reservation/Details/@Model.Id" />
+                <button type="submit" class="btn-primary-custom" style="background:#f59e0b;padding:8px 16px;font-size:0.85rem">⏳ Na čekanje</button>
+            </form>
+        }
+        @if (Model.Status != ReservationStatus.Cancelled)
+        {
+            <form method="post" action="/Reservation/SetStatus/@Model.Id" style="display:inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="status" value="@((int)ReservationStatus.Cancelled)" />
+                <input type="hidden" name="returnUrl" value="/Reservation/Details/@Model.Id" />
+                <button type="submit" class="btn-primary-custom" style="background:#ef4444;padding:8px 16px;font-size:0.85rem">✗ Otkaži</button>
+            </form>
+        }
+        <a href="/Reservation/Edit/@Model.Id" class="btn-secondary-custom" style="padding:8px 16px;font-size:0.85rem">✎ Uredi</a>
+    </div>
+}
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:24px">
     <div class="detail-section">
