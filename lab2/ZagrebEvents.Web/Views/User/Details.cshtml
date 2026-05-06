@@ -1,0 +1,106 @@
+@model User
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/User/Index">Korisnici</a> › <span>@Model.FullName</span>
+</nav>
+}
+
+<div class="user-profile">
+    <div class="user-header detail-section">
+        <div class="user-avatar-lg">@Model.Initials</div>
+        <div class="user-header-info">
+            <h1>@Model.FullName</h1>
+            <span class="@(Model.Role == UserRole.Admin ? "zone-vip" : Model.Role == UserRole.Owner ? "zone-regular" : "")">@Model.Role</span>
+            <div class="user-meta-row">
+                <span>📧 @Model.Email</span>
+                <span>📞 @Model.PhoneNumber</span>
+                <span>🎂 @Model.DateOfBirth.ToString("dd.MM.yyyy") (@Model.Age god.)</span>
+                <span>📅 Registriran: @Model.RegisteredAt.ToString("dd.MM.yyyy")</span>
+            </div>
+            @if (!Model.IsAdult)
+            {
+                <div class="ze-alert-danger" style="margin-top:10px">⚠️ Maloljetni korisnik — ograničen pristup 18+ eventima</div>
+            }
+        </div>
+    </div>
+
+    <div class="user-content-grid">
+        <div>
+            <div class="detail-section">
+                <h2>Rezervacije (@Model.Reservations.Count)</h2>
+                @if (Model.Reservations.Any())
+                {
+                    @foreach (var res in Model.Reservations.OrderByDescending(r => r.CreatedAt))
+                    {
+                        <div class="venue-event-row" style="margin-bottom:8px">
+                            <div>
+                                <div style="font-weight:600;color:#f1f5f9">@res.Event.Name</div>
+                                <div class="text-muted-ze" style="font-size:0.78rem">@res.Event.Venue.Name · @res.Event.StartTime.ToString("dd.MM.yyyy")</div>
+                            </div>
+                            <span>👥 @res.NumberOfGuests gostiju</span>
+                            <span style="color:@res.StatusColor;font-weight:600">@res.StatusLabel</span>
+                            <a href="/Reservation/Details/@res.Id" class="btn-secondary-custom" style="padding:4px 10px;font-size:0.78rem">Detalji</a>
+                        </div>
+                    }
+                }
+                else { <p class="text-muted-ze">Nema rezervacija.</p> }
+            </div>
+
+            <div class="detail-section">
+                <h2>Recenzije (@Model.Reviews.Count)</h2>
+                @if (Model.Reviews.Any())
+                {
+                    @foreach (var review in Model.Reviews.OrderByDescending(r => r.CreatedAt))
+                    {
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div><div style="font-weight:600;color:#f1f5f9">@review.Event.Name</div><div class="review-date">@review.CreatedAt.ToString("dd.MM.yyyy")</div></div>
+                                <div class="star-rating review-stars">@review.Stars</div>
+                            </div>
+                            <p class="review-comment">@review.Comment</p>
+                        </div>
+                    }
+                }
+                else { <p class="text-muted-ze">Nema recenzija.</p> }
+            </div>
+        </div>
+
+        <div>
+            <div class="detail-section">
+                <h2>Omiljene lokacije</h2>
+                @if (Model.FavoriteVenues.Any())
+                {
+                    @foreach (var venue in Model.FavoriteVenues)
+                    {
+                        <a href="/Venue/Details/@venue.Id" class="venue-event-row" style="margin-bottom:8px;display:flex">
+                            <span style="font-size:1.2rem">❤️</span>
+                            <span style="font-weight:600;color:#f1f5f9">@venue.Name</span>
+                            <span class="text-muted-ze" style="font-size:0.8rem">@venue.Address</span>
+                        </a>
+                    }
+                }
+                else { <p class="text-muted-ze">Nema omiljenih lokacija.</p> }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-header { display: flex; align-items: flex-start; gap: 24px; }
+.user-avatar-lg { width: 80px; height: 80px; border-radius: 50%; background: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; flex-shrink: 0; }
+.user-header-info h1 { margin: 0 0 8px; font-size: 1.8rem; }
+.user-meta-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 10px; font-size: 0.85rem; color: #94a3b8; }
+.user-content-grid { display: grid; grid-template-columns: 1fr 300px; gap: 24px; margin-top: 24px; }
+.review-card { background: #12121a; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.06); }
+.review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.review-date { font-size: 0.75rem; color: #64748b; }
+.review-stars { color: #f59e0b; }
+.review-comment { color: #94a3b8; font-size: 0.88rem; margin: 0; }
+.zone-vip { display: inline-block; padding: 2px 10px; border-radius: 10px; background: rgba(124,58,237,0.2); color: #7c3aed; font-size: 0.75rem; font-weight: 600; }
+.zone-regular { display: inline-block; padding: 2px 10px; border-radius: 10px; background: rgba(6,182,212,0.15); color: #06b6d4; font-size: 0.75rem; font-weight: 600; }
+@@media (max-width: 768px) { .user-content-grid { grid-template-columns: 1fr; } .user-header { flex-direction: column; } }
+</style>

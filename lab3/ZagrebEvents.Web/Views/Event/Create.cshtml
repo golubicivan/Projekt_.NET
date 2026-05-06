@@ -1,0 +1,90 @@
+@model Event
+@{
+    ViewData["Title"] = "Novi event";
+    var venues = ViewBag.Venues as List<Venue> ?? new List<Venue>();
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/eventi">Svi eventi</a> › <span>Novi event</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Kreiraj novi event</h1>
+    <p class="text-muted-ze">Dodaj novi event u bazu (admin funkcionalnost)</p>
+</div>
+
+<form asp-action="Create" asp-controller="Event" method="post" class="ze-form" style="max-width:800px">
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        <label asp-for="Name" class="ze-label">Naziv eventa</label>
+        <input asp-for="Name" class="ze-input" placeholder="npr. Techno Night ft. MLADY" required />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description" class="ze-label">Opis</label>
+        <textarea asp-for="Description" class="ze-input" rows="4" placeholder="Detaljan opis eventa..."></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="StartTime" class="ze-label">Početak</label>
+            <input asp-for="StartTime" type="datetime-local" class="ze-input" required />
+        </div>
+        <div class="form-group">
+            <label asp-for="EndTime" class="ze-label">Kraj</label>
+            <input asp-for="EndTime" type="datetime-local" class="ze-input" required />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Type" class="ze-label">Tip</label>
+            <select asp-for="Type" class="ze-input">
+                <option value="0">🪩 DJ Noć</option>
+                <option value="1">🎤 Koncert</option>
+                <option value="2">📖 Pub Quiz</option>
+                <option value="3">🎪 Festival</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label asp-for="VenueId" class="ze-label">Lokacija</label>
+            <select asp-for="VenueId" class="ze-input" required>
+                <option value="">Odaberi lokaciju...</option>
+                @foreach (var v in venues)
+                {
+                    <option value="@v.Id">@v.Name — @v.Address</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="EntryPrice" class="ze-label">Cijena ulaza (€)</label>
+            <input asp-for="EntryPrice" type="number" step="0.50" min="0" class="ze-input" placeholder="0 = besplatno" />
+        </div>
+        <div class="form-group">
+            <label asp-for="AgeLimit" class="ze-label">Dobna granica</label>
+            <input asp-for="AgeLimit" type="number" min="0" max="99" class="ze-input" placeholder="0 = bez limite" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="PosterUrl" class="ze-label">URL postera (slika)</label>
+        <input asp-for="PosterUrl" type="url" class="ze-input" placeholder="https://images.unsplash.com/..." />
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Kreiraj event</button>
+        <a href="/eventi" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

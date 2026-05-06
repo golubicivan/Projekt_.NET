@@ -1,0 +1,53 @@
+@model List<User>
+@{
+    ViewData["Title"] = "Korisnici";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <span>Korisnici</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Korisnici</h1>
+    <p class="text-muted-ze">@Model.Count registriranih korisnika</p>
+</div>
+
+<table class="ze-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Korisnik</th>
+            <th>Email</th>
+            <th>Telefon</th>
+            <th>Uloga</th>
+            <th>Registriran</th>
+            <th>Dob</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td><div class="review-avatar" style="width:34px;height:34px;font-size:0.75rem">@user.Initials</div></td>
+                <td style="font-weight:600;color:#f1f5f9">@user.FullName</td>
+                <td class="text-muted-ze">@user.Email</td>
+                <td class="text-muted-ze">@user.PhoneNumber</td>
+                <td>
+                    <span class="@(user.Role == UserRole.Admin ? "zone-vip" : user.Role == UserRole.Owner ? "zone-regular" : "")">
+                        @user.Role
+                    </span>
+                </td>
+                <td class="text-muted-ze">@user.RegisteredAt.ToString("dd.MM.yyyy")</td>
+                <td>
+                    <span style="color:@(user.IsAdult ? "#10b981" : "#ef4444");font-weight:600">
+                        @user.Age god. @(user.IsAdult ? "" : "(maloljetnik)")
+                    </span>
+                </td>
+                <td><a href="/User/Details/@user.Id" class="btn-secondary-custom" style="padding:5px 12px;font-size:0.8rem">Profil</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

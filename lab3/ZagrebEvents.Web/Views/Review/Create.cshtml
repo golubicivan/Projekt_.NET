@@ -1,0 +1,119 @@
+@model Review
+@{
+    ViewData["Title"] = "Nova recenzija";
+    var ev = ViewBag.Event as Event;
+    var events = ViewBag.Events as List<Event> ?? new List<Event>();
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/recenzije">Recenzije</a> › <span>Nova recenzija</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Napiši recenziju</h1>
+    @if (ev != null)
+    {
+        <p class="text-muted-ze">Recenziraš: <strong>@ev.TypeIcon @ev.Name</strong></p>
+    }
+</div>
+
+<form asp-action="Create" asp-controller="Review" method="post" class="ze-form" style="max-width:700px">
+    @Html.AntiForgeryToken()
+
+    @if (ev == null)
+    {
+        <div class="form-group">
+            <label asp-for="EventId" class="ze-label">Event</label>
+            <select asp-for="EventId" class="ze-input" required>
+                <option value="">Odaberi event...</option>
+                @foreach (var e in events)
+                {
+                    <option value="@e.Id">@e.TypeIcon @e.Name (@e.StartTime.ToString("dd.MM.yyyy"))</option>
+                }
+            </select>
+        </div>
+    }
+    else
+    {
+        <input type="hidden" asp-for="EventId" />
+    }
+
+    <div class="form-group">
+        <label class="ze-label">Ocjena (1-5 zvjezdica)</label>
+        <div class="rating-stars" id="ratingStars">
+            @for (int i = 1; i <= 5; i++)
+            {
+                <button type="button" class="rating-star" data-value="@i">★</button>
+            }
+            <input type="hidden" asp-for="Rating" id="ratingInput" />
+        </div>
+        <span asp-validation-for="Rating" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Comment" class="ze-label">Komentar</label>
+        <textarea asp-for="Comment" class="ze-input" rows="5" placeholder="Tvoja iskustva i dojmovi..." required></textarea>
+        <span asp-validation-for="Comment" class="text-danger"></span>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Pošalji recenziju</button>
+        @if (ev != null)
+        {
+            <a href="/event/@ev.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+        }
+        else
+        {
+            <a href="/recenzije" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+        }
+    </div>
+</form>
+
+<style>
+.rating-stars { display: flex; gap: 4px; }
+.rating-star {
+    background: none; border: none; padding: 0;
+    font-size: 2.4rem; color: #475569; cursor: pointer;
+    transition: color 0.15s, transform 0.1s;
+    line-height: 1;
+}
+.rating-star:hover { transform: scale(1.1); }
+.rating-star.active { color: #f59e0b; }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const stars = document.querySelectorAll('#ratingStars .rating-star');
+            const input = document.getElementById('ratingInput');
+
+            function paint(value) {
+                stars.forEach(s => {
+                    s.classList.toggle('active', parseInt(s.dataset.value) <= value);
+                });
+            }
+
+            // Inicijalna boja prema modelu
+            const initial = parseInt(input.value) || 0;
+            paint(initial);
+
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = parseInt(star.dataset.value);
+                    input.value = value;
+                    paint(value);
+                });
+                star.addEventListener('mouseenter', () => {
+                    paint(parseInt(star.dataset.value));
+                });
+            });
+
+            document.getElementById('ratingStars').addEventListener('mouseleave', () => {
+                paint(parseInt(input.value) || 0);
+            });
+        })();
+    </script>
+}

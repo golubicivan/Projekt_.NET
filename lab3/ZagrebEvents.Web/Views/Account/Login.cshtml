@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Prijava";
+    var returnUrl = ViewBag.ReturnUrl as string;
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Prijava</h1>
+            <p class="text-muted-ze">Dobrodošao natrag u ZG Events</p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="ze-alert-danger">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <form method="post" action="/prijava" class="ze-form">
+            @Html.AntiForgeryToken()
+            @if (!string.IsNullOrEmpty(returnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+            }
+
+            <div class="form-group">
+                <label class="ze-label">Email</label>
+                <input type="email" name="email" class="ze-input" placeholder="ivan.golubic@email.com" required autofocus />
+            </div>
+
+            <div class="form-group">
+                <label class="ze-label">Lozinka</label>
+                <input type="password" name="password" class="ze-input" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="btn-primary-custom" style="width:100%;margin-top:8px">Prijavi se</button>
+        </form>
+
+        <div class="auth-footer">
+            <p class="text-muted-ze">Nemaš account? <a href="/registracija" style="color:#7c3aed">Registriraj se</a></p>
+        </div>
+
+        <div class="auth-demo">
+            <div class="demo-title">Demo lozinke za prototip:</div>
+            <div class="demo-row"><strong>ivan.golubic@email.com</strong> / <code>ivan123</code> (Guest)</div>
+            <div class="demo-row"><strong>luka.peric@admin.com</strong> / <code>admin123</code> (Admin)</div>
+        </div>
+    </div>
+</div>
+
+<style>
+.auth-page { max-width: 480px; margin: 60px auto; padding: 0 20px; }
+.auth-card { background: #12121a; border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 32px; }
+.auth-header { text-align: center; margin-bottom: 28px; }
+.auth-header h1 { font-size: 1.8rem; font-weight: 700; color: #f1f5f9; margin: 0 0 6px; }
+.auth-footer { margin-top: 22px; text-align: center; font-size: 0.9rem; }
+.auth-footer a { text-decoration: none; font-weight: 600; }
+.auth-footer a:hover { text-decoration: underline; }
+.auth-demo {
+    margin-top: 22px; padding: 14px; background: #0a0a0f;
+    border: 1px dashed rgba(124,58,237,0.3); border-radius: 10px;
+    font-size: 0.78rem; color: #94a3b8;
+}
+.demo-title { font-weight: 600; color: #7c3aed; margin-bottom: 6px; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+.demo-row { margin-bottom: 4px; }
+.demo-row code { background: #1a1a2e; padding: 1px 6px; border-radius: 4px; color: #06b6d4; font-family: 'Courier New', monospace; }
+</style>
