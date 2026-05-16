@@ -32,6 +32,9 @@ namespace ZagrebEvents.Model
         [MaxLength(500)]
         public string ImageUrl { get; set; } = "";
 
+        // Soft delete
+        public DateTime? DeletedAt { get; set; }
+
         // 1-N relacije
         public virtual ICollection<Event> Events { get; set; } = new List<Event>();
         public virtual ICollection<Table> Tables { get; set; } = new List<Table>();

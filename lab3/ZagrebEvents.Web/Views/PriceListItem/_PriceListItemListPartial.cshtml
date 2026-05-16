@@ -1,0 +1,50 @@
+@model List<PriceListItem>
+@{
+    var isAdmin = User.IsInRole("Admin");
+}
+
+@if (!Model.Any())
+{
+    <div class="ze-empty-state" style="text-align:center;padding:60px 20px">
+        <p class="text-muted-ze">Nema stavki cjenika.</p>
+    </div>
+}
+else
+{
+    <table class="ze-table">
+        <thead>
+            <tr>
+                <th>#</th><th>Lokacija</th><th>Artikl</th><th>Kategorija</th><th>Cijena</th>
+                @if (isAdmin) { <th>Akcije</th> }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td class="text-muted-ze">#@p.Id</td>
+                    <td><a href="/lokacija/@p.VenueId" style="color:#7c3aed;text-decoration:none">@p.Venue?.Name</a></td>
+                    <td style="font-weight:600">@p.ItemName</td>
+                    <td class="text-muted-ze">@p.Category</td>
+                    <td style="color:#10b981;font-weight:600">@p.Price.ToString("F2") €</td>
+                    @if (isAdmin)
+                    {
+                        <td>
+                            <a href="/PriceListItem/Edit/@p.Id" class="btn-mini btn-edit">✎</a>
+                            <form method="post" action="/PriceListItem/Delete/@p.Id" style="display:inline"
+                                  data-confirm-delete="Obrisati stavku '@p.ItemName'?">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-mini btn-del">🗑️</button>
+                            </form>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<style>
+.btn-mini { background: transparent; border: none; cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; text-decoration: none; color: #94a3b8; transition: all 0.15s; }
+.btn-mini:hover { background: rgba(124,58,237,0.2); }
+.btn-del:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
+</style>

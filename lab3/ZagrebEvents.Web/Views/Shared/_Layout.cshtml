@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-grid.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ZagrebEvents.Web.styles.css" asp-append-version="true" />
+    <!-- Flatpickr (datepicker plugin) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 </head>
 <body>
 
@@ -55,6 +57,18 @@
                     <a href="/korisnici" class="sidebar-link">
                         <span class="sidebar-icon">&#128101;</span>
                         Korisnici
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="/stolovi" class="sidebar-link">
+                        <span class="sidebar-icon">&#127860;</span>
+                        Stolovi
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="/cjenik" class="sidebar-link">
+                        <span class="sidebar-icon">&#128181;</span>
+                        Cjenik
                     </a>
                 </li>
                 <li class="sidebar-menu-divider"></li>
@@ -144,6 +158,9 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Flatpickr (datepicker plugin) + hrvatska lokalizacija -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/hr.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>

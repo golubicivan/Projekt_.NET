@@ -1,0 +1,62 @@
+@model List<Review>
+@{
+    var userId = User.Identity?.IsAuthenticated == true
+        ? int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")
+        : 0;
+    var isAdmin = User.IsInRole("Admin");
+}
+
+@if (!Model.Any())
+{
+    <div class="ze-empty-state" style="text-align:center;padding:60px 20px">
+        <div style="font-size:3rem;margin-bottom:8px">⭐</div>
+        <p class="text-muted-ze">Nema recenzija.</p>
+    </div>
+}
+else
+{
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px">
+        @foreach (var review in Model)
+        {
+            var canEdit = review.UserId == userId || isAdmin;
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="review-avatar">@review.User?.Initials</div>
+                    <div style="flex:1">
+                        <div class="review-author">@review.User?.FullName</div>
+                        <div class="review-date">@review.CreatedAt.ToString("dd.MM.yyyy")</div>
+                    </div>
+                    <div class="star-rating review-stars">@review.Stars</div>
+                </div>
+                <p class="review-comment">@review.Comment</p>
+                <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;gap:8px">
+                    <a href="/event/@review.Event?.Id" style="color:#7c3aed;font-size:0.82rem;text-decoration:none;flex:1">
+                        @review.Event?.TypeIcon @review.Event?.Name
+                    </a>
+                    @if (canEdit)
+                    {
+                        <a href="/Review/Edit/@review.Id" class="btn-mini" title="Uredi">✎</a>
+                        <form method="post" action="/Review/Delete/@review.Id" style="display:inline"
+                              data-confirm-delete="Obrisati ovu recenziju?">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-mini btn-del" title="Obriši">🗑️</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<style>
+.review-card { background: #12121a; border-radius: 12px; padding: 18px; border: 1px solid rgba(255,255,255,0.06); }
+.review-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.review-avatar { width: 40px; height: 40px; border-radius: 50%; background: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; }
+.review-author { font-weight: 600; font-size: 0.9rem; color: #f1f5f9; }
+.review-date { font-size: 0.75rem; color: #64748b; }
+.review-stars { color: #f59e0b; font-size: 0.95rem; }
+.review-comment { color: #94a3b8; font-size: 0.9rem; margin: 0; line-height: 1.5; }
+.btn-mini { background: transparent; border: none; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; text-decoration: none; color: #94a3b8; transition: all 0.15s; }
+.btn-mini:hover { background: rgba(124,58,237,0.2); color: #7c3aed; }
+.btn-del:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
+</style>

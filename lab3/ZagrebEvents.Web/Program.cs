@@ -1,4 +1,6 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using ZagrebEvents.DAL;
 
@@ -31,6 +33,19 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Index");
     app.UseHsts();
 }
+
+// Lokalizacija: prepoznaj jezik iz browser headera (Accept-Language)
+var supportedCultures = new[]
+{
+    new CultureInfo("hr"),
+    new CultureInfo("en-US")
+};
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("hr"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
