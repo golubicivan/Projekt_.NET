@@ -1,0 +1,36 @@
+@model List<Reservation>
+@{
+    ViewData["Title"] = "Rezervacije";
+    var isAdmin = User.IsInRole("Admin");
+    var currentStatus = (int?)ViewBag.Status;
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <span>Rezervacije</span></nav>
+}
+
+<div class="ze-page-header">
+    <h1>Rezervacije</h1>
+    <p class="text-muted-ze">@(isAdmin ? "Admin može mijenjati status i brisati rezervacije" : "Lista postojećih rezervacija")</p>
+</div>
+
+@if (TempData["Success"] != null) { <div class="ze-alert-success" style="margin-bottom:16px">✓ @TempData["Success"]</div> }
+
+<form data-ajax-search="/Reservation/SearchPartial" data-target="#reservation-list"
+      style="margin-bottom:24px;display:flex;gap:12px;flex-wrap:wrap">
+    <div style="position:relative;flex:1;min-width:240px">
+        <input type="text" name="q" value="@ViewBag.Query" placeholder="Pretraži po korisniku ili eventu..."
+               class="ze-input" style="padding-left:42px" autocomplete="off" />
+        <span style="position:absolute;left:14px;top:13px;opacity:0.5">🔍</span>
+    </div>
+    <select name="status" class="ze-input" style="width:auto;min-width:200px">
+        <option value="">Svi statusi</option>
+        <option value="0" selected="@(currentStatus == 0)">⏳ Na čekanju</option>
+        <option value="1" selected="@(currentStatus == 1)">✓ Potvrđeno</option>
+        <option value="2" selected="@(currentStatus == 2)">✗ Otkazano</option>
+    </select>
+</form>
+
+<div id="reservation-list">
+    @await Html.PartialAsync("_ReservationListPartial", Model)
+</div>

@@ -1,0 +1,77 @@
+@*
+    Partial view za autocomplete dropdown.
+    Custom kontrola koja koristi AJAX za pretraživanje povezanih entiteta.
+
+    Korištenje:
+    @await Html.PartialAsync("_AutocompleteDropdown", new AutocompleteModel {
+        Name = "VenueId",
+        InitialId = Model.VenueId,
+        InitialLabel = Model.Venue?.Name ?? "",
+        Endpoint = "/Api/SearchVenues",
+        Label = "Lokacija",
+        Placeholder = "Upiši ime lokacije...",
+        Required = true
+    })
+*@
+@model ZagrebEvents.Web.Models.AutocompleteModel
+@{
+    var uniqueId = $"ac_{Model.Name}_{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+}
+
+<div class="ze-autocomplete-wrapper">
+    @if (!string.IsNullOrEmpty(Model.Label))
+    {
+        <label for="@uniqueId" class="ze-label">@Model.Label @(Model.Required ? "*" : "")</label>
+    }
+    <div class="ze-autocomplete"
+         data-endpoint="@Model.Endpoint"
+         data-min-chars="@Model.MinChars">
+        <input type="text"
+               id="@uniqueId"
+               class="ze-input ze-autocomplete-input"
+               value="@Model.InitialLabel"
+               placeholder="@Model.Placeholder"
+               autocomplete="off"
+               @(Model.Required ? "required" : "") />
+        <input type="hidden"
+               name="@Model.Name"
+               class="ze-autocomplete-hidden"
+               value="@(Model.InitialId?.ToString() ?? "")" />
+        <div class="ze-autocomplete-dropdown"></div>
+        <span class="ze-autocomplete-icon">🔍</span>
+    </div>
+    <small class="ze-hint">Počni pisati za pretraživanje, klikni rezultat za odabir.</small>
+</div>
+
+<style>
+.ze-autocomplete-wrapper { margin-bottom: 16px; }
+.ze-autocomplete { position: relative; }
+.ze-autocomplete-input { padding-right: 38px; }
+.ze-autocomplete-icon {
+    position: absolute; right: 12px; top: 14px;
+    pointer-events: none; opacity: 0.5;
+}
+.ze-autocomplete-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+    max-height: 280px; overflow-y: auto;
+    background: #12121a; border: 1px solid rgba(124,58,237,0.4);
+    border-radius: 0 0 10px 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: none;
+}
+.ze-autocomplete-dropdown.open { display: block; animation: zeFadeIn 0.15s ease; }
+.ze-autocomplete-item {
+    padding: 10px 14px; cursor: pointer; color: #f1f5f9;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.1s;
+    display: flex; flex-direction: column; gap: 2px;
+}
+.ze-autocomplete-item:hover { background: rgba(124,58,237,0.15); }
+.ze-autocomplete-item:last-child { border-bottom: none; }
+.ze-ac-subtitle { font-size: 0.78rem; color: #94a3b8; }
+.ze-autocomplete-loading, .ze-autocomplete-empty {
+    padding: 12px 14px; color: #94a3b8; font-size: 0.85rem; text-align: center;
+}
+.ze-hint { font-size: 0.72rem; color: #64748b; margin-top: 4px; display: block; }
+
+@@keyframes zeFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+</style>

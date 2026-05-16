@@ -1,0 +1,85 @@
+@model Review
+@{
+    ViewData["Title"] = "Uredi recenziju";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <a href="/recenzije">Recenzije</a> › <span>Uredi</span></nav>
+}
+
+<div class="ze-page-header">
+    <h1>Uredi recenziju</h1>
+    <p class="text-muted-ze">Event: <strong>@Model.Event?.Name</strong></p>
+</div>
+
+<form asp-action="Edit" asp-controller="Review" asp-route-id="@Model.Id" method="post" class="ze-form" style="max-width:700px">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
+
+    <div class="form-group">
+        <label class="ze-label">Ocjena (1-5 zvjezdica)</label>
+        <div class="rating-stars" id="ratingStars">
+            @for (int i = 1; i <= 5; i++)
+            {
+                <button type="button" class="rating-star" data-value="@i">★</button>
+            }
+            <input type="hidden" asp-for="Rating" id="ratingInput" />
+        </div>
+        <span asp-validation-for="Rating" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Comment" class="ze-label">Komentar *</label>
+        <textarea asp-for="Comment" class="ze-input" rows="5" required></textarea>
+        <span asp-validation-for="Comment" class="text-danger"></span>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Spremi promjene</button>
+        <a href="/event/@Model.EventId" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+<form method="post" action="/Review/Delete/@Model.Id"
+      data-confirm-delete="Obrisati ovu recenziju?" style="max-width:700px;margin-top:16px">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn-danger-custom" style="width:100%">🗑️ Obriši recenziju</button>
+</form>
+
+<style>
+.rating-stars { display: flex; gap: 4px; }
+.rating-star {
+    background: none; border: none; padding: 0;
+    font-size: 2.4rem; color: #475569; cursor: pointer;
+    transition: color 0.15s, transform 0.1s; line-height: 1;
+}
+.rating-star:hover { transform: scale(1.1); }
+.rating-star.active { color: #f59e0b; }
+.btn-danger-custom { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 20px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-danger-custom:hover { background: #ef4444; color: #fff; }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const stars = document.querySelectorAll('#ratingStars .rating-star');
+            const input = document.getElementById('ratingInput');
+            function paint(value) {
+                stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.value) <= value));
+            }
+            paint(parseInt(input.value) || 0);
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const value = parseInt(star.dataset.value);
+                    input.value = value;
+                    paint(value);
+                });
+                star.addEventListener('mouseenter', () => paint(parseInt(star.dataset.value)));
+            });
+            document.getElementById('ratingStars').addEventListener('mouseleave', () => {
+                paint(parseInt(input.value) || 0);
+            });
+        })();
+    </script>
+}

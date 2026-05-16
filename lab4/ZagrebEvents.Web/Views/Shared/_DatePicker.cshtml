@@ -1,0 +1,86 @@
+@*
+    Partial view za datepicker.
+    Koristi Flatpickr (JS plugin) — NIJE default browser datepicker.
+    Automatski prepoznaje hrvatski/engleski jezik iz CultureInfo.
+
+    Korištenje u viewu:
+    @await Html.PartialAsync("_DatePicker", new DatePickerModel {
+        Name = "StartTime",
+        Value = Model.StartTime,
+        Label = "Početak",
+        IncludeTime = true,
+        Required = true
+    })
+*@
+@model ZagrebEvents.Web.Models.DatePickerModel
+@{
+    var inputId = $"dp_{Model.Name}_{Guid.NewGuid().ToString("N").Substring(0, 6)}";
+    var culture = System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    var locale = culture == "hr" ? "hr" : "en";
+    var dateFormat = Model.IncludeTime
+        ? (locale == "hr" ? "d.m.Y H:i" : "m/d/Y H:i")
+        : (locale == "hr" ? "d.m.Y" : "m/d/Y");
+    var altInput = Model.IncludeTime ? "true" : "true";
+    var valueStr = Model.Value.HasValue ? Model.Value.Value.ToString("yyyy-MM-ddTHH:mm:ss") : "";
+}
+
+<div class="ze-datepicker-wrapper">
+    @if (!string.IsNullOrEmpty(Model.Label))
+    {
+        <label for="@inputId" class="ze-label">@Model.Label @(Model.Required ? "*" : "")</label>
+    }
+    <div class="ze-datepicker-input-wrapper">
+        <input type="text"
+               id="@inputId"
+               name="@Model.Name"
+               value="@valueStr"
+               class="ze-input ze-datepicker"
+               data-locale="@locale"
+               data-include-time="@(Model.IncludeTime.ToString().ToLower())"
+               data-date-format="@dateFormat"
+               placeholder="@(Model.IncludeTime ? (locale == "hr" ? "dan.mjesec.god HH:MM" : "MM/DD/YYYY HH:MM") : (locale == "hr" ? "dan.mjesec.god" : "MM/DD/YYYY"))"
+               @(Model.Required ? "required" : "") />
+        <span class="ze-datepicker-icon">📅</span>
+    </div>
+</div>
+
+<style>
+.ze-datepicker-wrapper { margin-bottom: 16px; }
+.ze-datepicker-input-wrapper { position: relative; }
+.ze-datepicker-input-wrapper .ze-datepicker { padding-right: 38px; }
+.ze-datepicker-icon {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%); pointer-events: none;
+    font-size: 1.1rem; opacity: 0.6;
+}
+
+/* Flatpickr dark theme prilagodba */
+.flatpickr-calendar {
+    background: #12121a !important;
+    border: 1px solid rgba(124,58,237,0.4) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+.flatpickr-months, .flatpickr-month, .flatpickr-current-month, .flatpickr-monthDropdown-months {
+    color: #f1f5f9 !important;
+    fill: #f1f5f9 !important;
+}
+.flatpickr-weekday { color: #94a3b8 !important; }
+.flatpickr-day {
+    color: #f1f5f9 !important;
+    border-radius: 6px !important;
+}
+.flatpickr-day:hover { background: rgba(124,58,237,0.2) !important; }
+.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+    background: #7c3aed !important;
+    border-color: #7c3aed !important;
+    color: #fff !important;
+}
+.flatpickr-day.today { border-color: #06b6d4 !important; }
+.flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay { color: #475569 !important; }
+.flatpickr-time input { color: #f1f5f9 !important; background: #1a1a2e !important; }
+.flatpickr-time .numInputWrapper:hover { background: rgba(124,58,237,0.2) !important; }
+.flatpickr-time .flatpickr-time-separator { color: #f1f5f9 !important; }
+.flatpickr-am-pm { color: #f1f5f9 !important; }
+.flatpickr-prev-month svg, .flatpickr-next-month svg { fill: #7c3aed !important; }
+.flatpickr-monthDropdown-months option { background: #12121a !important; }
+</style>
