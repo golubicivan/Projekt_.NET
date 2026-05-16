@@ -1,0 +1,60 @@
+@model Table
+@{ ViewData["Title"] = $"Uredi stol #{Model.TableNumber}"; }
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <a href="/stolovi">Stolovi</a> › <span>Uredi #@Model.TableNumber</span></nav>
+}
+
+<div class="ze-page-header"><h1>Uredi stol #@Model.TableNumber</h1></div>
+
+<form asp-action="Edit" asp-controller="Table" asp-route-id="@Model.Id" method="post" class="ze-form" style="max-width:600px">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="TableNumber" class="ze-label">Broj stola *</label>
+            <input asp-for="TableNumber" type="number" min="1" class="ze-input" required />
+        </div>
+        <div class="form-group">
+            <label asp-for="SeatCount" class="ze-label">Broj mjesta *</label>
+            <input asp-for="SeatCount" type="number" min="1" max="50" class="ze-input" required />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Zone" class="ze-label">Zona</label>
+            <select asp-for="Zone" class="ze-input">
+                <option value="0" selected="@(Model.Zone == TableZone.Regular)">Regular</option>
+                <option value="1" selected="@(Model.Zone == TableZone.VIP)">VIP</option>
+            </select>
+        </div>
+        <div class="form-group">
+            @await Html.PartialAsync("_AutocompleteDropdown", new ZagrebEvents.Web.Models.AutocompleteModel
+            {
+                Name = "VenueId",
+                InitialId = Model.VenueId,
+                InitialLabel = Model.Venue?.Name ?? "",
+                Endpoint = "/Api/SearchVenues",
+                Label = "Lokacija",
+                Required = true
+            })
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Spremi</button>
+        <a href="/stolovi" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+<form method="post" action="/Table/Delete/@Model.Id" data-confirm-delete="Obrisati stol #@Model.TableNumber?" style="max-width:600px;margin-top:16px">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn-danger-custom" style="width:100%">🗑️ Obriši stol</button>
+</form>
+
+<style>.btn-danger-custom { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 20px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-danger-custom:hover { background: #ef4444; color: #fff; }</style>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
