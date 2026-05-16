@@ -1,34 +1,33 @@
 @model Event
 @{
-    ViewData["Title"] = "Novi event";
+    ViewData["Title"] = $"Uredi: {Model.Name}";
 }
 
 @section Breadcrumbs {
 <nav class="ze-breadcrumb">
-    <a href="/">Karta</a> › <a href="/eventi">Svi eventi</a> › <span>Novi event</span>
+    <a href="/">Karta</a> › <a href="/eventi">Svi eventi</a> ›
+    <a href="/event/@Model.Id">@Model.Name</a> › <span>Uredi</span>
 </nav>
 }
 
 <div class="ze-page-header">
-    <h1>Kreiraj novi event</h1>
-    <p class="text-muted-ze">Admin funkcionalnost — dodaj novi event u bazu</p>
+    <h1>Uredi event</h1>
+    <p class="text-muted-ze">@Model.Name</p>
 </div>
 
-<form asp-action="Create" asp-controller="Event" method="post" class="ze-form" style="max-width:800px">
+<form asp-action="Edit" asp-controller="Event" asp-route-id="@Model.Id" method="post" class="ze-form" style="max-width:800px">
     @Html.AntiForgeryToken()
-
-    @* Validation summary - ako server vrati greške *@
     <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
 
     <div class="form-group">
         <label asp-for="Name" class="ze-label">Naziv eventa *</label>
-        <input asp-for="Name" class="ze-input" placeholder="npr. Techno Night ft. MLADY" required />
+        <input asp-for="Name" class="ze-input" required />
         <span asp-validation-for="Name" class="text-danger"></span>
     </div>
 
     <div class="form-group">
         <label asp-for="Description" class="ze-label">Opis</label>
-        <textarea asp-for="Description" class="ze-input" rows="4" placeholder="Detaljan opis eventa..."></textarea>
+        <textarea asp-for="Description" class="ze-input" rows="4"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
 
@@ -55,10 +54,10 @@
         <div class="form-group">
             <label asp-for="Type" class="ze-label">Tip</label>
             <select asp-for="Type" class="ze-input">
-                <option value="0">🪩 DJ Noć</option>
-                <option value="1">🎤 Koncert</option>
-                <option value="2">📖 Pub Quiz</option>
-                <option value="3">🎪 Festival</option>
+                <option value="0" selected="@(Model.Type == EventType.DJNight)">🪩 DJ Noć</option>
+                <option value="1" selected="@(Model.Type == EventType.Concert)">🎤 Koncert</option>
+                <option value="2" selected="@(Model.Type == EventType.PubQuiz)">📖 Pub Quiz</option>
+                <option value="3" selected="@(Model.Type == EventType.Festival)">🎪 Festival</option>
             </select>
         </div>
         <div class="form-group">
@@ -72,35 +71,51 @@
                 Placeholder = "Upiši ime lokacije...",
                 Required = true
             })
-            <span asp-validation-for="VenueId" class="text-danger"></span>
         </div>
     </div>
 
     <div class="form-row">
         <div class="form-group">
             <label asp-for="EntryPrice" class="ze-label">Cijena ulaza (€)</label>
-            <input asp-for="EntryPrice" type="number" step="0.50" min="0" class="ze-input" placeholder="0 = besplatno" />
-            <span asp-validation-for="EntryPrice" class="text-danger"></span>
+            <input asp-for="EntryPrice" type="number" step="0.50" min="0" class="ze-input" />
         </div>
         <div class="form-group">
             <label asp-for="AgeLimit" class="ze-label">Dobna granica</label>
-            <input asp-for="AgeLimit" type="number" min="0" max="99" class="ze-input" placeholder="0 = bez limite" />
-            <span asp-validation-for="AgeLimit" class="text-danger"></span>
+            <input asp-for="AgeLimit" type="number" min="0" max="99" class="ze-input" />
         </div>
     </div>
 
     <div class="form-group">
-        <label asp-for="PosterUrl" class="ze-label">URL postera (slika)</label>
-        <input asp-for="PosterUrl" type="url" class="ze-input" placeholder="https://images.unsplash.com/..." />
-        <span asp-validation-for="PosterUrl" class="text-danger"></span>
+        <label asp-for="PosterUrl" class="ze-label">URL postera</label>
+        <input asp-for="PosterUrl" type="url" class="ze-input" />
     </div>
 
     <div style="display:flex;gap:12px;margin-top:24px">
-        <button type="submit" class="btn-primary-custom" style="flex:1">Kreiraj event</button>
-        <a href="/eventi" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+        <button type="submit" class="btn-primary-custom" style="flex:1">Spremi promjene</button>
+        <a href="/event/@Model.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
     </div>
 </form>
+
+@if (User.IsInRole("Admin"))
+{
+    <form method="post" action="/Event/Delete/@Model.Id"
+          data-confirm-delete="Sigurno želiš obrisati event '@Model.Name'? (Soft delete - može se vratiti iz baze)"
+          style="max-width:800px;margin-top:16px">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn-danger-custom" style="width:100%">🗑️ Obriši event (soft delete)</button>
+    </form>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
+
+<style>
+.btn-danger-custom {
+    background: rgba(239,68,68,0.15); color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.3); border-radius: 8px;
+    padding: 10px 20px; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-danger-custom:hover { background: #ef4444; color: #fff; }
+</style>

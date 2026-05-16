@@ -1,0 +1,39 @@
+@model List<User>
+
+@if (!Model.Any())
+{
+    <div class="ze-empty-state" style="text-align:center;padding:60px 20px">
+        <div style="font-size:3rem;margin-bottom:8px">👤</div>
+        <p class="text-muted-ze">Nema korisnika.</p>
+    </div>
+}
+else
+{
+    <table class="ze-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Korisnik</th>
+                <th>Email</th>
+                <th>Telefon</th>
+                <th>Uloga</th>
+                <th>Dob</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td><div class="review-avatar" style="width:34px;height:34px;font-size:0.75rem">@user.Initials</div></td>
+                    <td style="font-weight:600;color:#f1f5f9">@user.FullName</td>
+                    <td class="text-muted-ze">@user.Email</td>
+                    <td class="text-muted-ze">@user.PhoneNumber</td>
+                    <td><span class="@(user.Role == UserRole.Admin ? "zone-vip" : "")">@user.Role</span></td>
+                    <td><span style="color:@(user.IsAdult ? "#10b981" : "#ef4444");font-weight:600">@user.Age god.</span></td>
+                    <td><a href="/User/Details/@user.Id" class="btn-secondary-custom" style="padding:5px 12px;font-size:0.8rem">Profil</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

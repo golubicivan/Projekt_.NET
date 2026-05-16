@@ -18,15 +18,69 @@ namespace ZagrebEvents.Web.Controllers
         // CUSTOM ROUTE: /rezervacije (i default /Reservation/Index)
         [Route("rezervacije")]
         [Route("[controller]/[action]")]
-        public IActionResult Index()
+        public IActionResult Index(string? q = null, int? status = null)
         {
-            var reservations = _db.Reservations
+            var query = _db.Reservations
                 .Include(r => r.User)
                 .Include(r => r.Event).ThenInclude(e => e!.Venue)
                 .Include(r => r.Table)
-                .OrderByDescending(r => r.CreatedAt)
-                .ToList();
-            return View(reservations);
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(r =>
+                    (r.User != null && (r.User.FirstName.Contains(q) || r.User.LastName.Contains(q))) ||
+                    (r.Event != null && r.Event.Name.Contains(q)));
+            }
+
+            if (status.HasValue)
+            {
+                var st = (ReservationStatus)status.Value;
+                query = query.Where(r => r.Status == st);
+            }
+
+            ViewBag.Query = q;
+            ViewBag.Status = status;
+            return View(query.OrderByDescending(r => r.CreatedAt).ToList());
+        }
+
+        [HttpGet]
+        [Route("Reservation/SearchPartial")]
+        public IActionResult SearchPartial(string? q = null, int? status = null)
+        {
+            var query = _db.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Event).ThenInclude(e => e!.Venue)
+                .Include(r => r.Table)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                query = query.Where(r =>
+                    (r.User != null && (r.User.FirstName.Contains(q) || r.User.LastName.Contains(q))) ||
+                    (r.Event != null && r.Event.Name.Contains(q)));
+            }
+            if (status.HasValue)
+            {
+                var st = (ReservationStatus)status.Value;
+                query = query.Where(r => r.Status == st);
+            }
+
+            return PartialView("_ReservationListPartial", query.OrderByDescending(r => r.CreatedAt).ToList());
+        }
+
+        // DELETE — hard delete (jer su rezervacije sitan zapis)
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public IActionResult Delete(int id)
+        {
+            var r = _db.Reservations.Find(id);
+            if (r == null) return NotFound();
+            _db.Reservations.Remove(r);
+            _db.SaveChanges();
+            TempData["Success"] = $"Rezervacija #{id} obrisana.";
+            return RedirectToAction("Index");
         }
 
         public IActionResult Details(int id)

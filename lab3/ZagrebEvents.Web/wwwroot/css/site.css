@@ -1580,3 +1580,105 @@ select.ze-input option {
         justify-content: center;
     }
 }
+
+
+/* ============================================================
+   LAB 4 — Loading spinner, toast, smooth scroll
+   ============================================================ */
+
+/* Loading Spinner */
+.ze-spinner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 12px;
+}
+.ze-spinner {
+    width: 48px; height: 48px;
+    border: 4px solid rgba(124, 58, 237, 0.2);
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    animation: ze-spin 0.8s linear infinite;
+}
+.ze-spinner-text { color: #94a3b8; font-size: 0.85rem; }
+
+@keyframes ze-spin { to { transform: rotate(360deg); } }
+
+/* Global Spinner Overlay */
+#ze-global-spinner {
+    position: fixed; inset: 0;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    z-index: 9999;
+    color: #f1f5f9;
+    font-size: 0.95rem;
+}
+
+/* Toast Notifications */
+.ze-toast {
+    position: fixed; top: 80px; right: 20px;
+    background: #12121a;
+    border-left: 4px solid #7c3aed;
+    border-radius: 10px;
+    padding: 14px 20px;
+    color: #f1f5f9;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    animation: ze-toast-in 0.4s ease;
+    min-width: 240px;
+    max-width: 400px;
+}
+.ze-toast.ze-toast-success { border-left-color: #10b981; }
+.ze-toast.ze-toast-error { border-left-color: #ef4444; }
+.ze-toast.ze-toast-out { animation: ze-toast-out 0.4s ease forwards; }
+
+@keyframes ze-toast-in {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes ze-toast-out {
+    to { transform: translateX(120%); opacity: 0; }
+}
+
+/* Smooth scroll na cijeloj stranici */
+html { scroll-behavior: smooth; }
+
+/* Hover transition na linkovima */
+a { transition: color 0.15s ease; }
+
+/* Form validation greske styling */
+.text-danger {
+    color: #ef4444 !important;
+    font-size: 0.8rem !important;
+    margin-top: 4px;
+    display: block;
+}
+.input-validation-error {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.05) !important;
+}
+.field-validation-error {
+    color: #ef4444 !important;
+    font-size: 0.8rem !important;
+}
+
+/* Validation summary container */
+.validation-summary-errors {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    color: #fca5a5;
+}
+.validation-summary-errors ul {
+    margin: 0;
+    padding-left: 20px;
+}

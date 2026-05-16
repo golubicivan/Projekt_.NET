@@ -28,6 +28,9 @@ namespace ZagrebEvents.Model
         public UserRole Role { get; set; }
         public DateTime RegisteredAt { get; set; }
 
+        // Soft delete
+        public DateTime? DeletedAt { get; set; }
+
         // 1-N: User ima više rezervacija
         public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 

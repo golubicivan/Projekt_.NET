@@ -1,6 +1,30 @@
 @model User
 @{
     ViewData["Title"] = Model.FullName;
+    var currentUserId = User.Identity?.IsAuthenticated == true
+        ? int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0")
+        : 0;
+    var canEdit = currentUserId == Model.Id || User.IsInRole("Admin");
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="ze-alert-success" style="margin-bottom:16px">✓ @TempData["Success"]</div>
+}
+
+@if (canEdit)
+{
+    <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:flex-end">
+        <a href="/User/Edit/@Model.Id" class="btn-primary-custom" style="font-size:0.85rem;padding:8px 16px">✎ Uredi profil</a>
+        @if (User.IsInRole("Admin") && currentUserId != Model.Id)
+        {
+            <form method="post" action="/User/Delete/@Model.Id" style="display:inline"
+                  data-confirm-delete="Obrisati korisnika '@Model.FullName'?">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-danger-custom" style="font-size:0.85rem;padding:8px 16px">🗑️ Obriši (soft)</button>
+            </form>
+        }
+    </div>
 }
 
 @section Breadcrumbs {

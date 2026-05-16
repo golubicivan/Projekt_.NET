@@ -26,6 +26,9 @@ namespace ZagrebEvents.Model
 
         public int AgeLimit { get; set; }
 
+        // Soft delete: null = aktivan, popunjen = obrisan
+        public DateTime? DeletedAt { get; set; }
+
         // 1-N: Event pripada jednom Venueu
         [ForeignKey(nameof(Venue))]
         public int VenueId { get; set; }
