@@ -13,6 +13,8 @@ namespace ZagrebEvents.Web.Controllers
 
         public UserController(ZagrebEventsDbContext db) => _db = db;
 
+        // INDEX — samo Admin (privatnost)
+        [Authorize(Roles = "Admin")]
         [Route("korisnici")]
         [Route("[controller]/[action]")]
         public IActionResult Index(string? q = null)
@@ -32,6 +34,7 @@ namespace ZagrebEvents.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         [Route("User/SearchPartial")]
         public IActionResult SearchPartial(string? q = null)
         {
@@ -46,8 +49,14 @@ namespace ZagrebEvents.Web.Controllers
             return PartialView("_UserListPartial", query.OrderBy(u => u.LastName).ToList());
         }
 
+        // DETAILS — vlasnik profila ili admin (privatnost)
+        [Authorize]
         public IActionResult Details(int id)
         {
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (currentUserId != id && !User.IsInRole("Admin"))
+                return Forbid();
+
             var user = _db.Users
                 .Include(u => u.Reservations).ThenInclude(r => r.Event).ThenInclude(e => e!.Venue)
                 .Include(u => u.Reservations).ThenInclude(r => r.Table)

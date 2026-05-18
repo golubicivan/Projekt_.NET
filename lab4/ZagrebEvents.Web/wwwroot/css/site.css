@@ -1682,3 +1682,32 @@ a { transition: color 0.15s ease; }
     margin: 0;
     padding-left: 20px;
 }
+
+
+/* Locked field (kada je polje preodabrano iz URL parametra) */
+.ze-locked-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(124, 58, 237, 0.08);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 10px;
+    color: #f1f5f9;
+}
+.ze-locked-icon { font-size: 1.2rem; }
+.ze-locked-text { flex: 1; }
+.ze-locked-clear {
+    color: #94a3b8;
+    text-decoration: none;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.05);
+    transition: all 0.15s;
+    font-size: 0.85rem;
+}
+.ze-locked-clear:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}

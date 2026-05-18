@@ -11,6 +11,8 @@ namespace ZagrebEvents.Web.Controllers
         private readonly ZagrebEventsDbContext _db;
         public TableController(ZagrebEventsDbContext db) => _db = db;
 
+        // INDEX — samo Admin (stolovi se gledaju samo po lokaciji)
+        [Authorize(Roles = "Admin")]
         [Route("stolovi")]
         [Route("[controller]/[action]")]
         public IActionResult Index(string? q = null)
@@ -25,6 +27,7 @@ namespace ZagrebEvents.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         [Route("Table/SearchPartial")]
         public IActionResult SearchPartial(string? q = null)
         {
