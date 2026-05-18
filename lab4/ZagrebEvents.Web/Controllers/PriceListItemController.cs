@@ -43,7 +43,20 @@ namespace ZagrebEvents.Web.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public IActionResult Create() => View(new PriceListItem());
+        public IActionResult Create(int? venueId = null)
+        {
+            var model = new PriceListItem();
+            if (venueId.HasValue)
+            {
+                var venue = _db.Venues.FirstOrDefault(v => v.Id == venueId.Value && v.DeletedAt == null);
+                if (venue != null)
+                {
+                    model.VenueId = venue.Id;
+                    model.Venue = venue;
+                }
+            }
+            return View(model);
+        }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
