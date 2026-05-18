@@ -229,3 +229,157 @@ Ovaj log bilježi sve interakcije s AI agentom (Claude) tijekom razvoja projekta
 **Zaključak: Lab 3 je 100% ispunjen prema PDF-u + dodatne funkcionalnosti.**
 
 ---
+
+## Sesija 4 — 16.05.2026. (Lab 4 — CRUD, AJAX, autocomplete, datepicker)
+
+### Interakcija 16
+**Korisnik:** Priložio PDF zadatka (Lab4.pdf) — CRUD za sve entitete, AJAX autocomplete dropdown, validacija, napredni JS, datepicker partial view
+**Agent:** Pročitao PDF, postavio detaljna pitanja: koje entitete za CRUD, soft vs hard delete, AJAX po čemu pretraživati, koji entiteti za autocomplete, koja datepicker biblioteka, koje animacije, ViewModel klase.
+
+### Interakcija 17
+**Korisnik:** Odgovorio: sve entitete (User ograničen), soft delete za bitne, hrvatski URL-ovi, autocomplete za Venue + User, Flatpickr, smooth scroll + loading spinner, opcija B (TryUpdateModelAsync) + UserEditViewModel.
+**Agent:** Implementirao Lab 4 kroz 15 zadataka:
+
+**Soft delete osnova:**
+- Dodano polje `DeletedAt` u Event, Venue, User modele
+- Migracija `AddSoftDelete` + update baze
+- Svi listings filtriraju soft-deleted zapise
+
+**Datepicker partial view (1 bod):**
+- `_DatePicker.cshtml` koristi Flatpickr (JS plugin)
+- `DatePickerModel` klasa za parametre (Name, Value, Label, IncludeTime, Required)
+- hr/en lokalizacija automatska iz `CultureInfo.CurrentCulture`
+- Custom dark theme styling
+- Lokalizacija u `Program.cs` s `UseRequestLocalization` + hr/en culture
+
+**Autocomplete dropdown (2 boda):**
+- `_AutocompleteDropdown.cshtml` — reusable partial view
+- `AutocompleteModel` klasa
+- `ApiController` s `SearchVenues` i `SearchUsers` JSON endpointima
+- AJAX kroz fetch(), debounce 250ms, top 10 rezultata
+- Korišten u Event/Table/PriceListItem Create i Edit formama
+
+**Kompletni CRUD (2 boda) za sve entitete:**
+- Event: Index + Search + Details + Create + Edit + Delete (soft)
+- Venue: Index + Search + Details + Create + Edit + Delete (soft)
+- User: Index (admin) + Details (vlasnik/admin) + Edit (UserEditViewModel) + Delete (soft)
+- Reservation: Index (admin) + Details + Edit + Delete (hard) + SetStatus brze akcije
+- Review: Index + Details + Create + Edit (autor/admin) + Delete (hard)
+- Table: Index (admin) + Create + Edit + Delete (hard)
+- PriceListItem: Index (admin) + Create + Edit + Delete (hard)
+- Sve Create/Edit forme koriste `<input asp-for>` Tag Helpere
+- Edit akcije koriste `TryUpdateModelAsync` + `[ActionName("Edit")]`
+
+**AJAX pretraga (uz CRUD bodove):**
+- Svaki controller ima `SearchPartial` akciju
+- Debounce 300ms u JS-u
+- Vraća partial view (`_*ListPartial.cshtml`)
+- JS update-a `<div id="...-list">` bez full reload-a
+- Reservation: dodatni filter po statusu
+- Review: dodatni filter po minRating
+
+**Validacija (1 bod) — client + server:**
+- `[Required]`, `[MaxLength]`, `[Range]`, `[EmailAddress]` na modelima i ViewModel-ima
+- `_ValidationScriptsPartial` u svim formama (jQuery validate okida se na blur)
+- `ModelState.IsValid` provjera u POST akcijama
+- Custom server-side: EndTime > StartTime, password match, email unique
+- `.text-danger` styling poruka u CSS-u
+
+**Napredno JS (1 bod) u `site.js`:**
+- Smooth scroll na anchor linkove
+- Loading spinner (lokalni .ze-spinner + global #ze-global-spinner overlay)
+- Delete confirmation modal preko `data-confirm-delete` atributa
+- Toast notification animacije
+- AJAX init pri DOM ready + re-init nakon AJAX-a
+- Debounced search inputi
+- Star rating widget za recenzije
+
+**Build & deploy:**
+- 0 grešaka, 16 nullable warnings
+- Sve rute testirane (200 OK)
+- Commit + push na claude/confident-sinoussi + merge u main
+
+---
+
+### Interakcija 18 (kopija u lab4 folder)
+**Korisnik:** "sjevaj i u lab4 datoteku na kompu"
+**Agent:** Kreirao `lab4/` kao kopiju `lab3/` (isti kod, posebna mapa). Connection string ostao isti pa baza radi out-of-the-box. Pushano u main.
+
+---
+
+### Interakcija 19 (admin akcije na Venue/Details)
+**Korisnik:** "kada napravim novu lokaciju i otvorim detalj te lokacije kao admin, da imam mogucnost dodavanja stolova, evenata, cjenika i prihvaćanja rezervacija"
+**Agent:**
+- Dodao Admin Quick Actions panel na Venue/Details (4 velika gumba)
+- Sekciju "Rezervacije za ovu lokaciju" s Confirm/Cancel/Pending gumbima
+- Inline edit/delete na svakom eventu/stolu/cjenik stavci
+- Event/Create, Table/Create, PriceListItem/Create primaju `?venueId=` query parametar
+- Table/Create auto-incrementira TableNumber za venue
+
+---
+
+### Interakcija 20 (privatnost + popravak Create formi)
+**Korisnik:** "neželim da gost vidi cjenik, korisnike, stolove kao globalne liste; rezervacije samo unutar eventa; popraviti Create akcije da preodaberu lokaciju"
+**Agent:**
+- `[Authorize(Roles="Admin")]` na User/Table/PriceListItem/Reservation Index + SearchPartial
+- User.Details i Reservation.Details = vlasnik ili admin
+- Sidebar refaktoriran: Guest vidi samo Eventi/Lokacije/Recenzije + Moj profil; Admin vidi dodatnu "ADMIN" sekciju
+- Event/Details: nova sekcija "Rezervacije za ovaj event" za admina
+- Create forme s `?venueId=` parametrom: prikaž zaključanu lokaciju (read-only + hidden input) umjesto autocomplete-a + opcija "✕" za promjenu
+
+---
+
+### Interakcija 21 (sakriti završene evente od guesta)
+**Korisnik:** "korisnik u eventima ne vidi evente koji su završili"
+**Agent:**
+- EventController.Index + SearchPartial: za ne-admina filtriraj samo nadolazeće (StartTime > Now)
+- EventController.Details: guest pokušava otvoriti prošli event → 404
+- Venue/Details: "Prošli eventi" sekcija samo za admina
+
+---
+
+### Interakcija 22 (provjera ispunjenosti Lab 4)
+**Korisnik:** "jel sve ispunjeno 100%"
+**Agent:** Sustavna provjera po PDF-u. Pronađeno jedno krženje: `Register.cshtml` koristi `<input type="date">` (default browser datepicker). PDF eksplicitno traži: "NE koristiti default datepicker". Zamijenjen s `_DatePicker` partial view-om (Flatpickr).
+
+---
+
+## Provjera ispunjenosti zahtjeva — Lab 4 PDF
+
+### Bodovanje (7/7 bodova)
+
+| Kriterij | Bodovi | Status |
+|----------|--------|--------|
+| Kompletno funkcionalan CRUD za sve entitete | 2 | ✅ |
+| Dropdown s AJAX autocomplete | 2 | ✅ |
+| Validacija (client + server) | 1 | ✅ |
+| Napredno korištenje JavaScripta | 1 | ✅ |
+| Datumska kontrola (partial view) | 1 | ✅ |
+
+### Nužni uvjeti
+
+- ✅ Pregled / Pretraga / Unos / Uređivanje / Brisanje na svim entitetima
+- ✅ Svaka lista ima AJAX pretragu
+- ✅ CRUD endpointi testirani i rade
+- ✅ Custom autocomplete kontrola s AJAX-om
+- ✅ Client-side validacija okida se na blur (jQuery validate)
+- ✅ Server-side validacija (`ModelState.IsValid` + custom)
+- ✅ Validacijske poruke estetski u UI-u
+- ✅ JavaScript animacije (spinner, smooth scroll, toast, autocomplete)
+- ✅ Datepicker partial view (Flatpickr)
+- ✅ Datepicker primijenjen svuda gdje se koristi datum
+- ✅ Datepicker hr+en format iz browser postavki
+- ✅ Datepicker NIJE default browser
+
+### Dodatno (preko PDF-a)
+
+- ✅ Soft delete za Event/Venue/User (preporučeno u PDF-u)
+- ✅ TryUpdateModelAsync u Edit akcijama (preporučeno)
+- ✅ ActionName atribut za EditPost (preporučeno)
+- ✅ UserEditViewModel (preporučeno za osjetljive entitete)
+- ✅ Privatnost: autorizacija po roli + vlasništvu
+- ✅ Završeni eventi sakriveni od guesta
+
+**Zaključak: Lab 4 je 100% ispunjen prema PDF-u + dodatne funkcionalnosti.**
+
+---
