@@ -121,10 +121,10 @@
                 }
             </div>
 
-            @if (pastEvents.Any())
+            @if (isAdmin && pastEvents.Any())
             {
                 <div class="detail-section">
-                    <h2>Prošli eventi</h2>
+                    <h2>Prošli eventi <small class="text-muted-ze" style="font-size:0.7rem;font-weight:400">(samo admin vidi)</small></h2>
                     <div style="display:flex;flex-direction:column;gap:10px">
                         @foreach (var ev in pastEvents)
                         {

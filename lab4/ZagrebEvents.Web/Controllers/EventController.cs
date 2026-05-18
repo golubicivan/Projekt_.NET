@@ -14,15 +14,23 @@ namespace ZagrebEvents.Web.Controllers
 
         public EventController(ZagrebEventsDbContext db) => _db = db;
 
-        // INDEX — lista evenata (filtrira soft-deleted)
+        // INDEX — lista evenata (admin vidi sve, ostali samo nadolazeće)
         [Route("eventi")]
         [Route("[controller]/[action]")]
         public IActionResult Index(string? q = null)
         {
+            var isAdmin = User.IsInRole("Admin");
+            var now = DateTime.Now;
+
             var query = _db.Events
                 .Include(e => e.Venue)
                 .Include(e => e.Reviews)
                 .Where(e => e.DeletedAt == null);
+
+            if (!isAdmin)
+            {
+                query = query.Where(e => e.StartTime > now);   // samo nadolazeći
+            }
 
             if (!string.IsNullOrWhiteSpace(q))
             {
@@ -42,10 +50,18 @@ namespace ZagrebEvents.Web.Controllers
         [Route("Event/SearchPartial")]
         public IActionResult SearchPartial(string? q = null)
         {
+            var isAdmin = User.IsInRole("Admin");
+            var now = DateTime.Now;
+
             var query = _db.Events
                 .Include(e => e.Venue)
                 .Include(e => e.Reviews)
                 .Where(e => e.DeletedAt == null);
+
+            if (!isAdmin)
+            {
+                query = query.Where(e => e.StartTime > now);
+            }
 
             if (!string.IsNullOrWhiteSpace(q))
             {
@@ -58,7 +74,7 @@ namespace ZagrebEvents.Web.Controllers
             return PartialView("_EventListPartial", events);
         }
 
-        // DETAILS
+        // DETAILS — guest ne smije vidjeti zavrsene evente
         [Route("event/{id:int}")]
         [Route("[controller]/[action]/{id:int}")]
         public IActionResult Details(int id)
@@ -72,6 +88,11 @@ namespace ZagrebEvents.Web.Controllers
                 .FirstOrDefault(e => e.Id == id && e.DeletedAt == null);
 
             if (ev == null) return NotFound();
+
+            // Zavrsene evente vidi samo admin
+            if (!ev.IsUpcoming && !User.IsInRole("Admin"))
+                return NotFound();
+
             return View(ev);
         }
 
