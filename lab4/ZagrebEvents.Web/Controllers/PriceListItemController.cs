@@ -11,6 +11,8 @@ namespace ZagrebEvents.Web.Controllers
         private readonly ZagrebEventsDbContext _db;
         public PriceListItemController(ZagrebEventsDbContext db) => _db = db;
 
+        // INDEX — samo Admin (cjenik se gleda samo po lokaciji)
+        [Authorize(Roles = "Admin")]
         [Route("cjenik")]
         [Route("[controller]/[action]")]
         public IActionResult Index(string? q = null)
@@ -28,6 +30,7 @@ namespace ZagrebEvents.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         [Route("PriceListItem/SearchPartial")]
         public IActionResult SearchPartial(string? q = null)
         {

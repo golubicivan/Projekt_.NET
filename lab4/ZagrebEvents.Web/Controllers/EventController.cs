@@ -66,7 +66,8 @@ namespace ZagrebEvents.Web.Controllers
             var ev = _db.Events
                 .Include(e => e.Venue).ThenInclude(v => v!.Tables)
                 .Include(e => e.Venue).ThenInclude(v => v!.PriceList)
-                .Include(e => e.Reservations)
+                .Include(e => e.Reservations).ThenInclude(r => r.User)
+                .Include(e => e.Reservations).ThenInclude(r => r.Table)
                 .Include(e => e.Reviews).ThenInclude(r => r.User)
                 .FirstOrDefault(e => e.Id == id && e.DeletedAt == null);
 

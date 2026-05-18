@@ -29,10 +29,11 @@
         </div>
         <nav class="sidebar-nav">
             <ul class="sidebar-menu">
+                @* Javno dostupne stranice — svi vide *@
                 <li class="sidebar-menu-item">
                     <a href="/eventi" class="sidebar-link">
                         <span class="sidebar-icon">&#128197;</span>
-                        Lista evenata
+                        Eventi
                     </a>
                 </li>
                 <li class="sidebar-menu-item">
@@ -42,47 +43,55 @@
                     </a>
                 </li>
                 <li class="sidebar-menu-item">
-                    <a href="/rezervacije" class="sidebar-link">
-                        <span class="sidebar-icon">&#128203;</span>
-                        Rezervacije
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
                     <a href="/recenzije" class="sidebar-link">
                         <span class="sidebar-icon">&#11088;</span>
                         Recenzije
                     </a>
                 </li>
-                <li class="sidebar-menu-item">
-                    <a href="/korisnici" class="sidebar-link">
-                        <span class="sidebar-icon">&#128101;</span>
-                        Korisnici
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a href="/stolovi" class="sidebar-link">
-                        <span class="sidebar-icon">&#127860;</span>
-                        Stolovi
-                    </a>
-                </li>
-                <li class="sidebar-menu-item">
-                    <a href="/cjenik" class="sidebar-link">
-                        <span class="sidebar-icon">&#128181;</span>
-                        Cjenik
-                    </a>
-                </li>
+
+                @* Admin-only stranice (privatnost) *@
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="sidebar-menu-divider"></li>
+                    <li class="sidebar-menu-item" style="padding:8px 18px 4px;font-size:0.7rem;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">
+                        Admin
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/rezervacije" class="sidebar-link">
+                            <span class="sidebar-icon">&#128203;</span>
+                            Sve rezervacije
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/korisnici" class="sidebar-link">
+                            <span class="sidebar-icon">&#128101;</span>
+                            Korisnici
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/stolovi" class="sidebar-link">
+                            <span class="sidebar-icon">&#127860;</span>
+                            Svi stolovi
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/cjenik" class="sidebar-link">
+                            <span class="sidebar-icon">&#128181;</span>
+                            Cijeli cjenik
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Event/Create" class="sidebar-link" style="color:#7c3aed">
+                            <span class="sidebar-icon">&#10133;</span>
+                            Novi event
+                        </a>
+                    </li>
+                }
+
+                @* User session info *@
                 <li class="sidebar-menu-divider"></li>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    if (User.IsInRole("Admin"))
-                    {
-                        <li class="sidebar-menu-item">
-                            <a href="/Event/Create" class="sidebar-link" style="color:#7c3aed">
-                                <span class="sidebar-icon">&#10133;</span>
-                                Novi event (Admin)
-                            </a>
-                        </li>
-                    }
                     <li class="sidebar-menu-item">
                         <a href="/moj-profil" class="sidebar-link">
                             <span class="sidebar-icon">&#128100;</span>

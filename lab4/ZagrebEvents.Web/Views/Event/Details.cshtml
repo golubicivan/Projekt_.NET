@@ -124,6 +124,84 @@
                 </div>
             }
 
+            <!-- Rezervacije za TAJ event — samo Admin -->
+            @if (User.IsInRole("Admin"))
+            {
+                var eventReservations = Model.Reservations.OrderByDescending(r => r.CreatedAt).ToList();
+                <div class="detail-section">
+                    <h2>🗓️ Rezervacije za ovaj event (@eventReservations.Count)</h2>
+                    @if (eventReservations.Any())
+                    {
+                        <table class="ze-table" style="margin-top:12px">
+                            <thead>
+                                <tr><th>#</th><th>Korisnik</th><th>Stol</th><th>Gosti</th><th>Status</th><th>Kreirano</th><th>Akcije</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in eventReservations)
+                                {
+                                    <tr>
+                                        <td class="text-muted-ze">#@r.Id</td>
+                                        <td style="font-weight:600">@r.User?.FullName</td>
+                                        <td class="text-muted-ze">Stol @r.Table?.TableNumber</td>
+                                        <td class="text-muted-ze">@r.NumberOfGuests 👥</td>
+                                        <td><span style="color:@r.StatusColor;font-weight:600">@r.StatusLabel</span></td>
+                                        <td class="text-muted-ze">@r.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                        <td>
+                                            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                                                @if (r.Status != ReservationStatus.Confirmed)
+                                                {
+                                                    <form method="post" action="/Reservation/SetStatus/@r.Id" style="display:inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Confirmed)" />
+                                                        <input type="hidden" name="returnUrl" value="/event/@Model.Id" />
+                                                        <button type="submit" class="btn-action btn-confirm" title="Potvrdi">✓</button>
+                                                    </form>
+                                                }
+                                                @if (r.Status != ReservationStatus.Cancelled)
+                                                {
+                                                    <form method="post" action="/Reservation/SetStatus/@r.Id" style="display:inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Cancelled)" />
+                                                        <input type="hidden" name="returnUrl" value="/event/@Model.Id" />
+                                                        <button type="submit" class="btn-action btn-cancel" title="Otkaži">✗</button>
+                                                    </form>
+                                                }
+                                                @if (r.Status == ReservationStatus.Cancelled)
+                                                {
+                                                    <form method="post" action="/Reservation/SetStatus/@r.Id" style="display:inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Pending)" />
+                                                        <input type="hidden" name="returnUrl" value="/event/@Model.Id" />
+                                                        <button type="submit" class="btn-action btn-pending" title="Vrati na čekanje">⏳</button>
+                                                    </form>
+                                                }
+                                                <a href="/Reservation/Details/@r.Id" class="btn-action btn-detail" title="Detalji">👁</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted-ze">Nema rezervacija za ovaj event.</p>
+                    }
+                </div>
+
+                <style>
+                    .btn-action { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+                    .btn-confirm { background: rgba(16,185,129,0.15); color: #10b981; }
+                    .btn-confirm:hover { background: #10b981; color: #fff; }
+                    .btn-cancel { background: rgba(239,68,68,0.15); color: #ef4444; }
+                    .btn-cancel:hover { background: #ef4444; color: #fff; }
+                    .btn-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+                    .btn-pending:hover { background: #f59e0b; color: #fff; }
+                    .btn-detail { background: rgba(255,255,255,0.05); color: #94a3b8; }
+                    .btn-detail:hover { background: rgba(124,58,237,0.2); color: #7c3aed; }
+                </style>
+            }
+
             <!-- Recenzije -->
             <div class="detail-section">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">

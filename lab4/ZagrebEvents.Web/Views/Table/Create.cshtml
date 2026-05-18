@@ -33,14 +33,29 @@
             </select>
         </div>
         <div class="form-group">
-            @await Html.PartialAsync("_AutocompleteDropdown", new ZagrebEvents.Web.Models.AutocompleteModel
+            @if (Model.VenueId > 0 && Model.Venue != null)
             {
-                Name = "VenueId",
-                Endpoint = "/Api/SearchVenues",
-                Label = "Lokacija",
-                Placeholder = "Upiši ime lokacije...",
-                Required = true
-            })
+                <label class="ze-label">Lokacija (preodabrana)</label>
+                <div class="ze-locked-field">
+                    <span class="ze-locked-icon">📍</span>
+                    <span class="ze-locked-text"><strong>@Model.Venue.Name</strong> <small class="text-muted-ze">— @Model.Venue.Address</small></span>
+                    <a href="/Table/Create" class="ze-locked-clear" title="Promijeni lokaciju">✕</a>
+                </div>
+                <input type="hidden" name="VenueId" value="@Model.VenueId" />
+            }
+            else
+            {
+                @await Html.PartialAsync("_AutocompleteDropdown", new ZagrebEvents.Web.Models.AutocompleteModel
+                {
+                    Name = "VenueId",
+                    InitialId = Model.VenueId > 0 ? Model.VenueId : null,
+                    InitialLabel = Model.Venue?.Name ?? "",
+                    Endpoint = "/Api/SearchVenues",
+                    Label = "Lokacija",
+                    Placeholder = "Upiši ime lokacije...",
+                    Required = true
+                })
+            }
         </div>
     </div>
 

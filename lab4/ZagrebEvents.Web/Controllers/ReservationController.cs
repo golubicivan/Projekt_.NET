@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,8 @@ namespace ZagrebEvents.Web.Controllers
             _db = db;
         }
 
-        // CUSTOM ROUTE: /rezervacije (i default /Reservation/Index)
+        // INDEX — samo Admin (rezervacije se gledaju po eventu/lokaciji)
+        [Authorize(Roles = "Admin")]
         [Route("rezervacije")]
         [Route("[controller]/[action]")]
         public IActionResult Index(string? q = null, int? status = null)
@@ -45,6 +47,7 @@ namespace ZagrebEvents.Web.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         [Route("Reservation/SearchPartial")]
         public IActionResult SearchPartial(string? q = null, int? status = null)
         {
@@ -83,6 +86,8 @@ namespace ZagrebEvents.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        // DETAILS — vlasnik rezervacije ili admin
+        [Authorize]
         public IActionResult Details(int id)
         {
             var reservation = _db.Reservations
@@ -92,6 +97,11 @@ namespace ZagrebEvents.Web.Controllers
                 .FirstOrDefault(r => r.Id == id);
 
             if (reservation == null) return NotFound();
+
+            var currentUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (reservation.UserId != currentUserId && !User.IsInRole("Admin"))
+                return Forbid();
+
             return View(reservation);
         }
 
