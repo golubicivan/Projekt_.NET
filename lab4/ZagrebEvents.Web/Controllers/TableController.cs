@@ -37,7 +37,23 @@ namespace ZagrebEvents.Web.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public IActionResult Create() => View(new Table());
+        public IActionResult Create(int? venueId = null)
+        {
+            var model = new Table { Zone = TableZone.Regular, SeatCount = 4 };
+            if (venueId.HasValue)
+            {
+                var venue = _db.Venues.FirstOrDefault(v => v.Id == venueId.Value && v.DeletedAt == null);
+                if (venue != null)
+                {
+                    model.VenueId = venue.Id;
+                    model.Venue = venue;
+                    var lastNum = _db.Tables.Where(t => t.VenueId == venue.Id)
+                                            .Select(t => (int?)t.TableNumber).Max();
+                    model.TableNumber = (lastNum ?? 0) + 1;
+                }
+            }
+            return View(model);
+        }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]

@@ -74,15 +74,25 @@ namespace ZagrebEvents.Web.Controllers
             return View(ev);
         }
 
-        // CREATE — GET
+        // CREATE — GET (može primiti ?venueId za predefiniran venue)
         [Authorize(Roles = "Admin")]
-        public IActionResult Create()
+        public IActionResult Create(int? venueId = null)
         {
-            return View(new Event
+            var model = new Event
             {
                 StartTime = DateTime.Today.AddDays(7).AddHours(20),
                 EndTime = DateTime.Today.AddDays(7).AddHours(23)
-            });
+            };
+            if (venueId.HasValue)
+            {
+                var venue = _db.Venues.FirstOrDefault(v => v.Id == venueId.Value && v.DeletedAt == null);
+                if (venue != null)
+                {
+                    model.VenueId = venue.Id;
+                    model.Venue = venue;
+                }
+            }
+            return View(model);
         }
 
         // CREATE — POST
