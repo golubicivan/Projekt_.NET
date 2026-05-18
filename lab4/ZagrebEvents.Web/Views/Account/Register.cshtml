@@ -39,10 +39,13 @@
             </div>
 
             <div class="form-row">
-                <div class="form-group">
-                    <label class="ze-label">Datum rođenja</label>
-                    <input type="date" name="dateOfBirth" class="ze-input" required />
-                </div>
+                @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
+                {
+                    Name = "dateOfBirth",
+                    Label = "Datum rođenja",
+                    IncludeTime = false,
+                    Required = true
+                })
                 <div class="form-group">
                     <label class="ze-label">Telefon (opcionalno)</label>
                     <input type="tel" name="phoneNumber" class="ze-input" placeholder="+385..." />
