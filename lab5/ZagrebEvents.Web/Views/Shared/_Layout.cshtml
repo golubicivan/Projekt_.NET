@@ -1,0 +1,236 @@
+@inject ZagrebEvents.DAL.ZagrebEventsDbContext Db
+@{
+    // Za Owner sidebar: pronađi venue kojim upravlja
+    ZagrebEvents.Model.Venue? ownedVenue = null;
+    if (User.IsInRole("Owner"))
+    {
+        var appUserId = User.GetAppUserId();
+        ownedVenue = Db.Venues.FirstOrDefault(v => v.OwnerAppUserId == appUserId && v.DeletedAt == null);
+    }
+}
+<!DOCTYPE html>
+<html lang="hr" data-color-scheme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>@ViewData["Title"] - ZG Events</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-grid.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ZagrebEvents.Web.styles.css" asp-append-version="true" />
+    <!-- Flatpickr (datepicker plugin) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+</head>
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar" role="navigation" aria-label="Glavni izbornik">
+        <div class="sidebar-header">
+            <span class="sidebar-logo">
+                <span class="logo-zg">ZG</span> Events
+            </span>
+            <button class="sidebar-close" onclick="closeSidebar()" aria-label="Zatvori izbornik">&#x2715;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <ul class="sidebar-menu">
+                @* Javno dostupne stranice — svi vide *@
+                <li class="sidebar-menu-item">
+                    <a href="/eventi" class="sidebar-link">
+                        <span class="sidebar-icon">&#128197;</span>
+                        Eventi
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="/lokacije" class="sidebar-link">
+                        <span class="sidebar-icon">&#128205;</span>
+                        Lokacije
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
+                    <a href="/recenzije" class="sidebar-link">
+                        <span class="sidebar-icon">&#11088;</span>
+                        Recenzije
+                    </a>
+                </li>
+
+                @* Admin-only stranice (privatnost) *@
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="sidebar-menu-divider"></li>
+                    <li class="sidebar-menu-item" style="padding:8px 18px 4px;font-size:0.7rem;color:#7c3aed;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">
+                        Admin
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/rezervacije" class="sidebar-link">
+                            <span class="sidebar-icon">&#128203;</span>
+                            Sve rezervacije
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/korisnici" class="sidebar-link">
+                            <span class="sidebar-icon">&#128101;</span>
+                            Korisnici
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/stolovi" class="sidebar-link">
+                            <span class="sidebar-icon">&#127860;</span>
+                            Svi stolovi
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/cjenik" class="sidebar-link">
+                            <span class="sidebar-icon">&#128181;</span>
+                            Cijeli cjenik
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/Event/Create" class="sidebar-link" style="color:#7c3aed">
+                            <span class="sidebar-icon">&#10133;</span>
+                            Novi event
+                        </a>
+                    </li>
+                }
+
+                @* Owner-only: link na svoj venue *@
+                @if (User.IsInRole("Owner") && ownedVenue != null)
+                {
+                    <li class="sidebar-menu-divider"></li>
+                    <li class="sidebar-menu-item" style="padding:8px 18px 4px;font-size:0.7rem;color:#06b6d4;text-transform:uppercase;letter-spacing:0.08em;font-weight:700">
+                        Vlasnik
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/lokacija/@ownedVenue.Id" class="sidebar-link" style="color:#06b6d4">
+                            <span class="sidebar-icon">&#127970;</span>
+                            Moj venue (@ownedVenue.Name)
+                        </a>
+                    </li>
+                }
+
+                @* User session info *@
+                <li class="sidebar-menu-divider"></li>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <li class="sidebar-menu-item">
+                        <a href="/moj-profil" class="sidebar-link">
+                            <span class="sidebar-icon">&#128100;</span>
+                            Moj profil
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item" style="padding:14px 18px;font-size:0.78rem;color:#64748b">
+                        Prijavljen kao:<br/>
+                        <strong style="color:#f1f5f9">@User.Identity.Name</strong>
+                        <span style="color:#7c3aed">(@(User.IsInRole("Admin") ? "Admin" : User.IsInRole("Owner") ? "Owner" : "Guest"))</span>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/odjava" class="sidebar-link" style="color:#ef4444">
+                            <span class="sidebar-icon">&#128682;</span>
+                            Odjava
+                        </a>
+                    </li>
+                }
+                else
+                {
+                    <li class="sidebar-menu-item">
+                        <a href="/prijava" class="sidebar-link" style="color:#7c3aed">
+                            <span class="sidebar-icon">&#128272;</span>
+                            Prijava
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/registracija" class="sidebar-link">
+                            <span class="sidebar-icon">&#10133;</span>
+                            Registracija
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <p class="sidebar-footer-text">ZG Events &copy; 2026</p>
+        </div>
+    </aside>
+
+    <!-- Navbar -->
+    <header class="ze-navbar" role="banner">
+        <div class="ze-navbar-inner">
+            <a href="/" class="ze-navbar-logo" aria-label="ZG Events - Početna">
+                <span class="logo-zg">ZG</span> Events
+            </a>
+            <button class="ze-hamburger" id="hamburgerBtn" onclick="openSidebar()" aria-label="Otvori izbornik" aria-expanded="false" aria-controls="sidebar">
+                &#9776;
+            </button>
+        </div>
+    </header>
+
+    <!-- Breadcrumbs -->
+    <div class="ze-breadcrumbs-wrapper">
+        <div class="container-fluid ze-breadcrumbs-container">
+            @RenderSection("Breadcrumbs", required: false)
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <main class="ze-main" role="main">
+        <div class="container-fluid ze-content-wrapper">
+            @RenderBody()
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="ze-footer" role="contentinfo">
+        <div class="ze-footer-inner">
+            <p class="ze-footer-copy">&copy; 2026 ZG Events. Sva prava pridržana.</p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Flatpickr (datepicker plugin) + hrvatska lokalizacija -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/hr.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        function openSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const btn = document.getElementById('hamburgerBtn');
+            sidebar.classList.add('sidebar--open');
+            overlay.classList.add('sidebar-overlay--visible');
+            btn.setAttribute('aria-expanded', 'true');
+            document.body.classList.add('sidebar-active');
+        }
+
+        function closeSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const btn = document.getElementById('hamburgerBtn');
+            sidebar.classList.remove('sidebar--open');
+            overlay.classList.remove('sidebar-overlay--visible');
+            btn.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('sidebar-active');
+        }
+
+        // Zatvori sidebar pritiskom na Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+        });
+
+        // Page fade-in animacija
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.classList.add('page-loaded');
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

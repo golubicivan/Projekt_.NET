@@ -1,0 +1,88 @@
+@model List<Reservation>
+@{
+    var isAdmin = User.IsInRole("Admin");
+}
+
+@if (!Model.Any())
+{
+    <div class="ze-empty-state" style="text-align:center;padding:60px 20px">
+        <div style="font-size:3rem;margin-bottom:8px">📋</div>
+        <p class="text-muted-ze">Nema rezervacija.</p>
+    </div>
+}
+else
+{
+    <table class="ze-table">
+        <thead>
+            <tr>
+                <th>#</th><th>Korisnik</th><th>Event</th><th>Stol</th><th>Gosti</th>
+                <th>Status</th><th>Kreirano</th><th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var res in Model)
+            {
+                <tr>
+                    <td class="text-muted-ze">#@res.Id</td>
+                    <td style="font-weight:600;color:#f1f5f9">@res.User?.FullName</td>
+                    <td><a href="/event/@res.Event?.Id" style="color:#7c3aed;text-decoration:none">@res.Event?.Name</a></td>
+                    <td class="text-muted-ze">Stol @res.Table?.TableNumber</td>
+                    <td class="text-muted-ze">@res.NumberOfGuests 👥</td>
+                    <td><span style="color:@res.StatusColor;font-weight:600">@res.StatusLabel</span></td>
+                    <td class="text-muted-ze">@res.CreatedAt.ToString("dd.MM.yyyy")</td>
+                    <td>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap">
+                            <a href="/Reservation/Details/@res.Id" class="btn-mini" title="Detalji">👁</a>
+                            @if (isAdmin)
+                            {
+                                @if (res.Status != ReservationStatus.Confirmed)
+                                {
+                                    <form method="post" action="/Reservation/SetStatus/@res.Id" style="display:inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Confirmed)" />
+                                        <input type="hidden" name="returnUrl" value="/rezervacije" />
+                                        <button type="submit" class="btn-action btn-confirm" title="Potvrdi">✓</button>
+                                    </form>
+                                }
+                                @if (res.Status != ReservationStatus.Cancelled)
+                                {
+                                    <form method="post" action="/Reservation/SetStatus/@res.Id" style="display:inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Cancelled)" />
+                                        <input type="hidden" name="returnUrl" value="/rezervacije" />
+                                        <button type="submit" class="btn-action btn-cancel" title="Otkaži">✗</button>
+                                    </form>
+                                }
+                                <a href="/Reservation/Edit/@res.Id" class="btn-action btn-edit" title="Uredi">✎</a>
+                                <form method="post" action="/Reservation/Delete/@res.Id" style="display:inline"
+                                      data-confirm-delete="Obrisati rezervaciju #@res.Id?">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-action btn-del" title="Obriši">🗑️</button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<style>
+.btn-action {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px; border: none;
+    font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; text-decoration: none; transition: all 0.15s;
+}
+.btn-confirm { background: rgba(16,185,129,0.15); color: #10b981; }
+.btn-confirm:hover { background: #10b981; color: #fff; }
+.btn-cancel { background: rgba(239,68,68,0.15); color: #ef4444; }
+.btn-cancel:hover { background: #ef4444; color: #fff; }
+.btn-edit { background: rgba(124,58,237,0.15); color: #7c3aed; }
+.btn-edit:hover { background: #7c3aed; color: #fff; }
+.btn-del { background: rgba(239,68,68,0.15); color: #ef4444; }
+.btn-del:hover { background: #ef4444; color: #fff; }
+.btn-mini { background: rgba(255,255,255,0.05); color: #94a3b8; padding: 4px 8px; border-radius: 6px; text-decoration: none; font-size: 0.78rem; }
+.btn-mini:hover { background: rgba(124,58,237,0.15); color: #7c3aed; }
+</style>

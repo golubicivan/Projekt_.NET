@@ -1,0 +1,85 @@
+@model ZagrebEvents.Web.Models.UserEditViewModel
+@{
+    ViewData["Title"] = "Uredi profil";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> ›
+<a href="/User/Details/@Model.Id">@Model.FirstName @Model.LastName</a> › <span>Uredi profil</span></nav>
+}
+
+<div class="ze-page-header">
+    <h1>Uredi profil</h1>
+    <p class="text-muted-ze">Možeš mijenjati samo email, telefon i lozinku.<br/>
+    Ime, prezime i datum rođenja se ne smiju mijenjati zbog identiteta.</p>
+</div>
+
+<form asp-action="Edit" asp-controller="User" asp-route-id="@Model.Id" method="post" class="ze-form" style="max-width:700px">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
+
+    @* Read-only polja *@
+    <div class="form-row">
+        <div class="form-group">
+            <label class="ze-label">Ime (read-only)</label>
+            <input value="@Model.FirstName" class="ze-input" disabled style="opacity:0.6" />
+        </div>
+        <div class="form-group">
+            <label class="ze-label">Prezime (read-only)</label>
+            <input value="@Model.LastName" class="ze-input" disabled style="opacity:0.6" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="ze-label">Datum rođenja (read-only)</label>
+        <input value="@Model.DateOfBirth.ToString("dd.MM.yyyy")" class="ze-input" disabled style="opacity:0.6" />
+    </div>
+
+    @* Editable polja *@
+    <hr style="border-color:rgba(255,255,255,0.1);margin:24px 0" />
+    <h3 style="font-size:1.05rem;margin-bottom:12px">Podaci za kontakt</h3>
+
+    <div class="form-group">
+        <label asp-for="Email" class="ze-label">Email *</label>
+        <input asp-for="Email" type="email" class="ze-input" required />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="PhoneNumber" class="ze-label">Telefon</label>
+        <input asp-for="PhoneNumber" type="tel" class="ze-input" />
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+
+    <hr style="border-color:rgba(255,255,255,0.1);margin:24px 0" />
+    <h3 style="font-size:1.05rem;margin-bottom:12px">Promjena lozinke (opcionalno)</h3>
+
+    <div class="form-group">
+        <label asp-for="CurrentPassword" class="ze-label">Trenutna lozinka *</label>
+        <input asp-for="CurrentPassword" type="password" class="ze-input" required placeholder="Potrebno za potvrdu" />
+        <span asp-validation-for="CurrentPassword" class="text-danger"></span>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="NewPassword" class="ze-label">Nova lozinka (min. 6 znakova)</label>
+            <input asp-for="NewPassword" type="password" class="ze-input" placeholder="Ostavi prazno ako ne mijenjaš" />
+            <span asp-validation-for="NewPassword" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="NewPasswordConfirm" class="ze-label">Potvrdi novu lozinku</label>
+            <input asp-for="NewPasswordConfirm" type="password" class="ze-input" />
+            <span asp-validation-for="NewPasswordConfirm" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Spremi promjene</button>
+        <a href="/User/Details/@Model.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

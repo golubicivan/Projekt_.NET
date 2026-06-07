@@ -1,0 +1,119 @@
+@model Event
+@{
+    ViewData["Title"] = "Novi event";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/eventi">Svi eventi</a> › <span>Novi event</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Kreiraj novi event</h1>
+    <p class="text-muted-ze">Admin funkcionalnost — dodaj novi event u bazu</p>
+</div>
+
+<form asp-action="Create" asp-controller="Event" method="post" class="ze-form" style="max-width:800px">
+    @Html.AntiForgeryToken()
+
+    @* Validation summary - ako server vrati greške *@
+    <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
+
+    <div class="form-group">
+        <label asp-for="Name" class="ze-label">Naziv eventa *</label>
+        <input asp-for="Name" class="ze-input" placeholder="npr. Techno Night ft. MLADY" required />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description" class="ze-label">Opis</label>
+        <textarea asp-for="Description" class="ze-input" rows="4" placeholder="Detaljan opis eventa..."></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="form-row">
+        @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
+        {
+            Name = "StartTime",
+            Value = Model.StartTime,
+            Label = "Početak",
+            IncludeTime = true,
+            Required = true
+        })
+        @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
+        {
+            Name = "EndTime",
+            Value = Model.EndTime,
+            Label = "Kraj",
+            IncludeTime = true,
+            Required = true
+        })
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Type" class="ze-label">Tip</label>
+            <select asp-for="Type" class="ze-input">
+                <option value="0">🪩 DJ Noć</option>
+                <option value="1">🎤 Koncert</option>
+                <option value="2">📖 Pub Quiz</option>
+                <option value="3">🎪 Festival</option>
+            </select>
+        </div>
+        <div class="form-group">
+            @if (Model.VenueId > 0 && Model.Venue != null)
+            {
+                <label class="ze-label">Lokacija (preodabrana)</label>
+                <div class="ze-locked-field">
+                    <span class="ze-locked-icon">📍</span>
+                    <span class="ze-locked-text"><strong>@Model.Venue.Name</strong> <small class="text-muted-ze">— @Model.Venue.Address</small></span>
+                    <a href="/Event/Create" class="ze-locked-clear" title="Promijeni lokaciju">✕</a>
+                </div>
+                <input type="hidden" name="VenueId" value="@Model.VenueId" />
+            }
+            else
+            {
+                @await Html.PartialAsync("_AutocompleteDropdown", new ZagrebEvents.Web.Models.AutocompleteModel
+                {
+                    Name = "VenueId",
+                    InitialId = Model.VenueId,
+                    InitialLabel = Model.Venue?.Name ?? "",
+                    Endpoint = "/Api/SearchVenues",
+                    Label = "Lokacija",
+                    Placeholder = "Upiši ime lokacije...",
+                    Required = true
+                })
+            }
+            <span asp-validation-for="VenueId" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="EntryPrice" class="ze-label">Cijena ulaza (€)</label>
+            <input asp-for="EntryPrice" type="number" step="0.50" min="0" class="ze-input" placeholder="0 = besplatno" />
+            <span asp-validation-for="EntryPrice" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="AgeLimit" class="ze-label">Dobna granica</label>
+            <input asp-for="AgeLimit" type="number" min="0" max="99" class="ze-input" placeholder="0 = bez limite" />
+            <span asp-validation-for="AgeLimit" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="PosterUrl" class="ze-label">URL postera (slika)</label>
+        <input asp-for="PosterUrl" type="url" class="ze-input" placeholder="https://images.unsplash.com/..." />
+        <span asp-validation-for="PosterUrl" class="text-danger"></span>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Kreiraj event</button>
+        <a href="/eventi" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

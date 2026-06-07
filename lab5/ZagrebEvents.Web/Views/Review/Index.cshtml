@@ -1,0 +1,35 @@
+@model List<Review>
+@{
+    ViewData["Title"] = "Recenzije";
+    var minRating = (int?)ViewBag.MinRating;
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <span>Recenzije</span></nav>
+}
+
+<div class="ze-page-header">
+    <h1>Recenzije</h1>
+    <p class="text-muted-ze">@Model.Count recenzija · Prosječna ocjena: <span style="color:#f59e0b;font-weight:700">@(Model.Any() ? Model.Average(r => r.Rating).ToString("F1") : "—")</span></p>
+</div>
+
+@if (TempData["Success"] != null) { <div class="ze-alert-success" style="margin-bottom:16px">✓ @TempData["Success"]</div> }
+
+<form data-ajax-search="/Review/SearchPartial" data-target="#review-list"
+      style="margin-bottom:24px;display:flex;gap:12px;flex-wrap:wrap">
+    <div style="position:relative;flex:1;min-width:240px">
+        <input type="text" name="q" value="@ViewBag.Query" placeholder="Pretraži po komentaru, autoru ili eventu..."
+               class="ze-input" style="padding-left:42px" autocomplete="off" />
+        <span style="position:absolute;left:14px;top:13px;opacity:0.5">🔍</span>
+    </div>
+    <select name="minRating" class="ze-input" style="width:auto;min-width:160px">
+        <option value="">Sve ocjene</option>
+        <option value="5" selected="@(minRating == 5)">★★★★★ samo</option>
+        <option value="4" selected="@(minRating == 4)">★★★★ i više</option>
+        <option value="3" selected="@(minRating == 3)">★★★ i više</option>
+    </select>
+</form>
+
+<div id="review-list">
+    @await Html.PartialAsync("_ReviewListPartial", Model)
+</div>
