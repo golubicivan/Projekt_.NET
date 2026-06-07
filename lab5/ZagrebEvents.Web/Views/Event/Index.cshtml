@@ -26,11 +26,12 @@
     <div class="ze-alert-success" style="margin-bottom:16px">✓ @TempData["Success"]</div>
 }
 
+@{ int? selType = ViewBag.Type as int?; }
 <form data-ajax-search="/Event/SearchPartial"
       data-target="#event-list"
       class="ze-search-form"
-      style="margin-bottom:24px">
-    <div style="position:relative">
+      style="margin-bottom:24px;display:flex;gap:12px;flex-wrap:wrap">
+    <div style="position:relative;flex:1;min-width:220px">
         <input type="text" name="q" value="@ViewBag.Query"
                placeholder="Pretraži evente..."
                class="ze-input"
@@ -38,6 +39,13 @@
                autocomplete="off" />
         <span style="position:absolute;left:14px;top:13px;opacity:0.5">🔍</span>
     </div>
+    <select name="type" class="ze-input" style="max-width:200px">
+        <option value="">Svi tipovi</option>
+        <option value="0" selected="@(selType == 0)">🪩 DJ Noć</option>
+        <option value="1" selected="@(selType == 1)">🎤 Koncert</option>
+        <option value="2" selected="@(selType == 2)">📖 Pub Quiz</option>
+        <option value="3" selected="@(selType == 3)">🎪 Festival</option>
+    </select>
 </form>
 
 <div id="event-list">

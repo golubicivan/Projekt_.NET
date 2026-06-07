@@ -21,38 +21,23 @@ namespace ZagrebEvents.Web.Controllers
         // INDEX — lista evenata (admin vidi sve, ostali samo nadolazeće)
         [Route("eventi")]
         [Route("[controller]/[action]")]
-        public IActionResult Index(string? q = null)
+        public IActionResult Index(string? q = null, int? type = null)
         {
-            var isAdmin = User.IsInRole("Admin");
-            var now = DateTime.Now;
-
-            var query = _db.Events
-                .Include(e => e.Venue)
-                .Include(e => e.Reviews)
-                .Where(e => e.DeletedAt == null);
-
-            if (!isAdmin)
-            {
-                query = query.Where(e => e.StartTime > now);   // samo nadolazeći
-            }
-
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                query = query.Where(e =>
-                    e.Name.Contains(q) ||
-                    (e.Venue != null && e.Venue.Name.Contains(q)));
-            }
-
-            var events = query.OrderBy(e => e.StartTime).ToList();
-
             ViewBag.Query = q;
-            return View(events);
+            ViewBag.Type = type;
+            return View(FilterEvents(q, type));
         }
 
         // AJAX SEARCH — vraća partial view s listom evenata
         [HttpGet]
         [Route("Event/SearchPartial")]
-        public IActionResult SearchPartial(string? q = null)
+        public IActionResult SearchPartial(string? q = null, int? type = null)
+        {
+            return PartialView("_EventListPartial", FilterEvents(q, type));
+        }
+
+        // Zajednička logika filtriranja evenata (naziv/lokacija + tip)
+        private List<Event> FilterEvents(string? q, int? type)
         {
             var isAdmin = User.IsInRole("Admin");
             var now = DateTime.Now;
@@ -63,19 +48,20 @@ namespace ZagrebEvents.Web.Controllers
                 .Where(e => e.DeletedAt == null);
 
             if (!isAdmin)
-            {
-                query = query.Where(e => e.StartTime > now);
-            }
+                query = query.Where(e => e.StartTime > now);   // samo nadolazeći
 
             if (!string.IsNullOrWhiteSpace(q))
-            {
                 query = query.Where(e =>
                     e.Name.Contains(q) ||
                     (e.Venue != null && e.Venue.Name.Contains(q)));
+
+            if (type.HasValue)
+            {
+                var et = (EventType)type.Value;
+                query = query.Where(e => e.Type == et);
             }
 
-            var events = query.OrderBy(e => e.StartTime).ToList();
-            return PartialView("_EventListPartial", events);
+            return query.OrderBy(e => e.StartTime).ToList();
         }
 
         // DETAILS — guest ne smije vidjeti zavrsene evente
