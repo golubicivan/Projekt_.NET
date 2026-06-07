@@ -84,7 +84,7 @@
 
         // Sadržaj kruga: logo (ako postoji) ili inicijali venuea
         const inner = venue.logoUrl
-            ? `<img class="pin-logo" src="${venue.logoUrl}" alt="" onerror="this.parentNode.innerHTML='${escapeHtml(venue.initials)}'"/>`
+            ? `<img class="pin-logo" src="${venue.logoUrl}?v=3" alt="" loading="eager" onerror="this.parentNode.innerHTML='${escapeHtml(venue.initials)}'"/>`
             : `<span class="pin-initials">${escapeHtml(venue.initials)}</span>`;
 
         const featuredCls = ev.isFeatured ? ' pin-featured' : '';
