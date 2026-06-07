@@ -8,13 +8,18 @@
     <div id="map"></div>
 
     <!-- Filter po tipu eventa -->
-    <div class="map-filter">
-        <div class="filter-title">Prikaži na karti</div>
-        <label class="filter-item"><input type="checkbox" class="type-filter" value="DJNight" checked /> <span class="legend-dot" style="border-color:#7c3aed">🪩</span> DJ Noć</label>
-        <label class="filter-item"><input type="checkbox" class="type-filter" value="Concert" checked /> <span class="legend-dot" style="border-color:#ef4444">🎤</span> Koncert</label>
-        <label class="filter-item"><input type="checkbox" class="type-filter" value="PubQuiz" checked /> <span class="legend-dot" style="border-color:#f59e0b">📖</span> Pub Quiz</label>
-        <label class="filter-item"><input type="checkbox" class="type-filter" value="Festival" checked /> <span class="legend-dot" style="border-color:#f97316">🎪</span> Festival</label>
-        <div class="filter-hint">Obrub pina = tip eventa · ⭐ = istaknuto</div>
+    <div class="map-filter" id="mapFilter">
+        <button type="button" class="filter-title" id="filterToggle" aria-expanded="true">
+            <span>Prikaži na karti</span>
+            <span class="filter-chevron">▾</span>
+        </button>
+        <div class="filter-body" id="filterBody">
+            <label class="filter-item"><input type="checkbox" class="type-filter" value="DJNight" checked /> <span class="legend-dot" style="border-color:#7c3aed">🪩</span> DJ Noć</label>
+            <label class="filter-item"><input type="checkbox" class="type-filter" value="Concert" checked /> <span class="legend-dot" style="border-color:#ef4444">🎤</span> Koncert</label>
+            <label class="filter-item"><input type="checkbox" class="type-filter" value="PubQuiz" checked /> <span class="legend-dot" style="border-color:#f59e0b">📖</span> Pub Quiz</label>
+            <label class="filter-item"><input type="checkbox" class="type-filter" value="Festival" checked /> <span class="legend-dot" style="border-color:#f97316">🎪</span> Festival</label>
+            <div class="filter-hint">Obrub pina = tip eventa · ⭐ = istaknuto</div>
+        </div>
     </div>
 </div>
 
@@ -118,6 +123,22 @@
 
     document.querySelectorAll('.type-filter').forEach(cb => cb.addEventListener('change', refreshMarkers));
 
+    // Sklapanje/širenje panela filtera
+    (function () {
+        const panel = document.getElementById('mapFilter');
+        const toggle = document.getElementById('filterToggle');
+        if (!panel || !toggle) return;
+        // na malim ekranima kreni sklopljeno
+        if (window.matchMedia('(max-width: 600px)').matches) {
+            panel.classList.add('collapsed');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+        toggle.addEventListener('click', function () {
+            const collapsed = panel.classList.toggle('collapsed');
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+        });
+    })();
+
     map.addLayer(cluster);
     refreshMarkers();
 </script>
@@ -134,7 +155,13 @@
     border-radius: 12px; padding: 12px 14px; z-index: 1000; backdrop-filter: blur(8px);
     min-width: 160px;
 }
-.filter-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 8px; font-weight: 700; }
+.filter-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 8px; font-weight: 700; background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
+.filter-title:hover { color: #a78bfa; }
+.filter-chevron { transition: transform 0.25s ease; font-size: 0.9rem; }
+.map-filter.collapsed .filter-chevron { transform: rotate(-90deg); }
+.filter-body { overflow: hidden; transition: max-height 0.28s ease, opacity 0.2s ease; max-height: 320px; opacity: 1; }
+.map-filter.collapsed .filter-body { max-height: 0; opacity: 0; }
+.map-filter.collapsed .filter-title { margin-bottom: 0; }
 .filter-item { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #cbd5e1; margin-bottom: 6px; cursor: pointer; }
 .filter-item input { accent-color: #7c3aed; cursor: pointer; }
 .filter-hint { font-size: 0.65rem; color: #64748b; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px; }
