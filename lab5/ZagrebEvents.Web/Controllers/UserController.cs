@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ZagrebEvents.DAL;
+using ZagrebEvents.Model;
 using ZagrebEvents.Web.Models;
 using ZagrebEvents.Web.Services;
 
@@ -72,6 +73,24 @@ namespace ZagrebEvents.Web.Controllers
                 .FirstOrDefault(u => u.Id == id && u.DeletedAt == null);
 
             if (user == null) return NotFound();
+
+            // Admin panel za dodjelu uloga: lista venuea + trenutno posjedovani venue
+            if (User.IsInRole("Admin"))
+            {
+                ViewBag.AllVenues = _db.Venues
+                    .Where(v => v.DeletedAt == null)
+                    .OrderBy(v => v.Name)
+                    .ToList();
+
+                if (!string.IsNullOrEmpty(user.AppUserId))
+                {
+                    ViewBag.OwnedVenueId = _db.Venues
+                        .Where(v => v.OwnerAppUserId == user.AppUserId && v.DeletedAt == null)
+                        .Select(v => (int?)v.Id)
+                        .FirstOrDefault();
+                }
+            }
+
             return View(user);
         }
 
@@ -183,6 +202,58 @@ namespace ZagrebEvents.Web.Controllers
             _db.SaveChanges();
             TempData["Success"] = $"Korisnik '{user.FullName}' obrisan.";
             return RedirectToAction("Index");
+        }
+
+        // ===================== ADMIN: DODJELA ULOGE + VLASNIŠTVA =====================
+        // POST: /User/SetRole/5  -- samo Admin
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetRole(int id, string role, int? venueId)
+        {
+            var user = _db.Users.FirstOrDefault(u => u.Id == id && u.DeletedAt == null);
+            if (user == null) return NotFound();
+            if (string.IsNullOrEmpty(user.AppUserId)) { TempData["Error"] = "Korisnik nema Identity nalog."; return RedirectToAction("Details", new { id }); }
+
+            var validRoles = new[] { "Guest", "Owner", "Admin" };
+            if (!validRoles.Contains(role)) { TempData["Error"] = "Nepoznata uloga."; return RedirectToAction("Details", new { id }); }
+
+            var appUser = await _userManager.FindByIdAsync(user.AppUserId);
+            if (appUser == null) return NotFound();
+
+            // Ažuriraj Identity role (ukloni postojeće, dodaj novu)
+            var current = await _userManager.GetRolesAsync(appUser);
+            await _userManager.RemoveFromRolesAsync(appUser, current);
+            await _userManager.AddToRoleAsync(appUser, role);
+
+            // Ažuriraj domensku rolu
+            user.Role = role switch
+            {
+                "Admin" => UserRole.Admin,
+                "Owner" => UserRole.Owner,
+                _ => UserRole.Guest
+            };
+
+            // Vlasništvo venuea
+            if (role == "Owner" && venueId.HasValue)
+            {
+                // oslobodi prijašnje venue ovog usera, pa dodijeli novi
+                foreach (var v in _db.Venues.Where(v => v.OwnerAppUserId == appUser.Id))
+                    v.OwnerAppUserId = null;
+
+                var venue = _db.Venues.FirstOrDefault(v => v.Id == venueId.Value && v.DeletedAt == null);
+                if (venue != null) venue.OwnerAppUserId = appUser.Id;
+            }
+            else if (role != "Owner")
+            {
+                // više nije owner -> oslobodi sve njegove venue
+                foreach (var v in _db.Venues.Where(v => v.OwnerAppUserId == appUser.Id))
+                    v.OwnerAppUserId = null;
+            }
+
+            await _db.SaveChangesAsync();
+            TempData["Success"] = $"Uloga korisnika '{user.FullName}' postavljena na {role}. (Korisnik se mora ponovno prijaviti da promjena stupi na snagu.)";
+            return RedirectToAction("Details", new { id });
         }
     }
 }

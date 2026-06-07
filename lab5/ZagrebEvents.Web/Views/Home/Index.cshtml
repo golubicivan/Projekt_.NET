@@ -7,45 +7,49 @@
 <div class="map-page">
     <div id="map"></div>
 
-    <div class="map-legend">
-        <div class="legend-title">Tip eventa</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#7c3aed">🪩</span> DJ Noć</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#ef4444">🎤</span> Koncert</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#f59e0b">📖</span> Pub Quiz</div>
-        <div class="legend-item"><span class="legend-dot" style="background:#f97316">🎪</span> Festival</div>
+    <!-- Filter po tipu eventa -->
+    <div class="map-filter">
+        <div class="filter-title">Prikaži na karti</div>
+        <label class="filter-item"><input type="checkbox" class="type-filter" value="DJNight" checked /> <span class="legend-dot" style="border-color:#7c3aed">🪩</span> DJ Noć</label>
+        <label class="filter-item"><input type="checkbox" class="type-filter" value="Concert" checked /> <span class="legend-dot" style="border-color:#ef4444">🎤</span> Koncert</label>
+        <label class="filter-item"><input type="checkbox" class="type-filter" value="PubQuiz" checked /> <span class="legend-dot" style="border-color:#f59e0b">📖</span> Pub Quiz</label>
+        <label class="filter-item"><input type="checkbox" class="type-filter" value="Festival" checked /> <span class="legend-dot" style="border-color:#f97316">🎪</span> Festival</label>
+        <div class="filter-hint">Obrub pina = tip eventa · ⭐ = istaknuto</div>
     </div>
 </div>
 
 @section Scripts {
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
     const venues = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Select(v => new {
         id = v.Id,
         name = v.Name,
-        address = v.Address,
+        initials = v.Initials,
+        logoUrl = v.LogoUrl,
         lat = v.Latitude,
         lng = v.Longitude,
-        type = v.Type.ToString(),
         upcomingEvent = v.Events
-            .Where(e => e.StartTime > DateTime.Now)
+            .Where(e => e.StartTime > DateTime.Now && e.DeletedAt == null)
             .OrderBy(e => e.StartTime)
             .Select(e => new {
                 id = e.Id,
                 name = e.Name,
+                type = e.Type.ToString(),
                 typeIcon = e.TypeIcon,
                 typeColor = e.TypeColor,
                 typeLabel = e.TypeLabel,
                 posterUrl = e.PosterUrl,
                 startTime = e.StartTime.ToString("dd.MM.yyyy HH:mm"),
                 entryPrice = e.EntryPrice,
-                ageLimit = e.AgeLimit
+                isFeatured = e.IsFeatured
             })
             .FirstOrDefault()
     })));
 
-    const map = L.map('map', { zoomControl: false }).setView([45.815, 15.982], 13);
-
+    const map = L.map('map', { zoomControl: false, minZoom: 10 }).setView([45.812, 15.975], 12);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -53,190 +57,145 @@
         maxZoom: 19
     }).addTo(map);
 
-    const typeColors = {
-        DJNight: '#7c3aed',
-        Concert: '#ef4444',
-        PubQuiz: '#f59e0b',
-        Festival: '#f97316'
-    };
+    function escapeHtml(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; }
+
+    // Cluster grupa (preklapajuci pinovi -> jedan krug s brojem)
+    const cluster = L.markerClusterGroup({
+        maxClusterRadius: 55,
+        showCoverageOnHover: false,
+        iconCreateFunction: c => L.divIcon({
+            html: '<div class="ze-cluster"><span>' + c.getChildCount() + '</span></div>',
+            className: '', iconSize: [46, 46]
+        })
+    });
+
+    // Spremi sve markere s tipom (za filtriranje)
+    const allMarkers = []; // { marker, type }
 
     venues.forEach(venue => {
         if (!venue.upcomingEvent) return;
-
         const ev = venue.upcomingEvent;
         const color = ev.typeColor;
 
+        // Sadržaj kruga: logo (ako postoji) ili inicijali venuea
+        const inner = venue.logoUrl
+            ? `<img class="pin-logo" src="${venue.logoUrl}" alt="" onerror="this.parentNode.innerHTML='${escapeHtml(venue.initials)}'"/>`
+            : `<span class="pin-initials">${escapeHtml(venue.initials)}</span>`;
+
+        const featuredCls = ev.isFeatured ? ' pin-featured' : '';
+        const star = ev.isFeatured ? '<span class="pin-star">⭐</span>' : '';
+
         const markerHtml = `
-            <div class="custom-pin" style="--pin-color:${color}">
-                <div class="pin-glow"></div>
-                <div class="pin-circle">
-                    <span class="pin-icon">${ev.typeIcon}</span>
+            <div class="venue-pin${featuredCls}" style="--pin-color:${color}">
+                <div class="pin-ring">${inner}${star}</div>
+            </div>`;
+
+        const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [54, 54], iconAnchor: [27, 27] });
+
+        const price = ev.entryPrice == 0 ? 'Besplatno' : (ev.entryPrice + ' EUR');
+        const popupHtml = `
+            <div class="pin-popup">
+                <img src="${ev.posterUrl}" alt="${escapeHtml(ev.name)}" onerror="this.src='https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400'"/>
+                <div class="pin-popup-body">
+                    <div class="pin-popup-badge" style="background:${color}">${ev.typeIcon} ${escapeHtml(ev.typeLabel)}${ev.isFeatured ? ' ⭐' : ''}</div>
+                    <div class="pin-popup-venue">📍 ${escapeHtml(venue.name)}</div>
+                    <div class="pin-popup-event">${escapeHtml(ev.name)}</div>
+                    <div class="pin-popup-meta">📅 ${escapeHtml(ev.startTime)} · <span style="color:#10b981">${price}</span></div>
+                    <a href="/Event/Details/${ev.id}" class="pin-popup-btn">Otvori event →</a>
                 </div>
-                <div class="pin-tooltip">
-                    <img src="${ev.posterUrl}" alt="${ev.name}" onerror="this.src='https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=200'"/>
-                    <div class="pin-tooltip-name">${venue.name}</div>
-                </div>
-            </div>
-        `;
+            </div>`;
 
-        const icon = L.divIcon({
-            html: markerHtml,
-            className: '',
-            iconSize: [52, 52],
-            iconAnchor: [26, 26]
-        });
-
-        const marker = L.marker([venue.lat, venue.lng], { icon }).addTo(map);
-
-        marker.on('click', () => {
-            window.location.href = `/Event/Details/${ev.id}`;
-        });
+        const marker = L.marker([venue.lat, venue.lng], { icon });
+        marker.bindPopup(popupHtml, { className: 'ze-popup', minWidth: 200, maxWidth: 220 });
+        allMarkers.push({ marker, type: ev.type });
     });
+
+    function refreshMarkers() {
+        const active = Array.from(document.querySelectorAll('.type-filter:checked')).map(c => c.value);
+        cluster.clearLayers();
+        allMarkers.forEach(m => { if (active.includes(m.type)) cluster.addLayer(m.marker); });
+    }
+
+    document.querySelectorAll('.type-filter').forEach(cb => cb.addEventListener('change', refreshMarkers));
+
+    map.addLayer(cluster);
+    refreshMarkers();
 </script>
 }
 
 <style>
-.map-page {
-    position: fixed;
-    top: 60px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: hidden;
-}
+.map-page { position: fixed; top: 60px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+#map { width: 100%; height: 100%; }
 
-#map {
-    width: 100%;
-    height: 100%;
+/* Filter kontrola */
+.map-filter {
+    position: absolute; top: 16px; left: 16px;
+    background: rgba(18, 18, 26, 0.94); border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 12px; padding: 12px 14px; z-index: 1000; backdrop-filter: blur(8px);
+    min-width: 160px;
 }
+.filter-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 8px; font-weight: 700; }
+.filter-item { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: #cbd5e1; margin-bottom: 6px; cursor: pointer; }
+.filter-item input { accent-color: #7c3aed; cursor: pointer; }
+.filter-hint { font-size: 0.65rem; color: #64748b; margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px; }
+.legend-dot { width: 24px; height: 24px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; background: #1a1a2e; }
 
-.map-legend {
-    position: absolute;
-    bottom: 40px;
-    left: 20px;
-    background: rgba(18, 18, 26, 0.92);
-    border: 1px solid rgba(124, 58, 237, 0.3);
-    border-radius: 12px;
-    padding: 14px 18px;
-    z-index: 1000;
-    backdrop-filter: blur(8px);
-}
-
-.legend-title {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #64748b;
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-    color: #94a3b8;
-    margin-bottom: 6px;
-}
-
-.legend-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.9rem;
-}
-
-/* Pin stilovi */
-.custom-pin {
-    position: relative;
-    width: 52px;
-    height: 52px;
-    cursor: pointer;
-}
-
-.pin-glow {
-    position: absolute;
-    bottom: -4px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 30px;
-    height: 20px;
-    background: radial-gradient(ellipse, var(--pin-color) 0%, transparent 70%);
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-.pin-circle {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: var(--pin-color);
-    border: 3px solid rgba(255,255,255,0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+/* Venue pin: krug s logom/inicijalima, obrub = tip eventa */
+.venue-pin { position: relative; width: 54px; height: 54px; cursor: pointer; }
+.pin-ring {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #12121a; border: 3px solid var(--pin-color);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.55);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    position: relative;
-    z-index: 2;
+    margin: 3px;
+}
+.venue-pin:hover .pin-ring { transform: scale(1.12); box-shadow: 0 6px 22px var(--pin-color); }
+.pin-logo { width: 100%; height: 100%; object-fit: cover; }
+.pin-initials { color: #f1f5f9; font-weight: 800; font-size: 1rem; letter-spacing: -0.5px; }
+.pin-star { position: absolute; top: -4px; right: -4px; font-size: 0.9rem; filter: drop-shadow(0 0 3px gold); }
+
+/* Featured spotlight - sareni pulsirajuci glow */
+.pin-featured .pin-ring {
+    border-color: #fff;
+    animation: ze-spotlight 1.8s ease-in-out infinite;
+}
+@@keyframes ze-spotlight {
+    0%   { box-shadow: 0 0 8px 2px #7c3aed, 0 0 14px 4px #ef4444; }
+    33%  { box-shadow: 0 0 8px 2px #f59e0b, 0 0 14px 4px #06b6d4; }
+    66%  { box-shadow: 0 0 8px 2px #10b981, 0 0 14px 4px #f97316; }
+    100% { box-shadow: 0 0 8px 2px #7c3aed, 0 0 14px 4px #ef4444; }
 }
 
-.custom-pin:hover .pin-circle {
-    transform: scale(1.15);
-    box-shadow: 0 6px 24px var(--pin-color);
+/* Cluster */
+.ze-cluster {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: radial-gradient(circle, #7c3aed 0%, #5b21b6 100%);
+    border: 3px solid rgba(255,255,255,0.4);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 800; font-size: 1.05rem;
+    box-shadow: 0 4px 16px rgba(124,58,237,0.6);
 }
 
-.pin-tooltip {
-    position: absolute;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #12121a;
-    border: 1px solid rgba(124,58,237,0.4);
-    border-radius: 10px;
-    padding: 6px;
-    width: 130px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-    z-index: 10;
-}
+/* Preview popup (dark) */
+.ze-popup .leaflet-popup-content-wrapper { background: #12121a; color: #f1f5f9; border: 1px solid rgba(124,58,237,0.4); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); padding: 0; overflow: hidden; }
+.ze-popup .leaflet-popup-content { margin: 0; width: 100% !important; }
+.ze-popup .leaflet-popup-tip { background: #12121a; border: 1px solid rgba(124,58,237,0.4); }
+.ze-popup a.leaflet-popup-close-button { color: #94a3b8; padding: 6px 8px 0 0; }
+.pin-popup img { width: 100%; height: 110px; object-fit: cover; display: block; }
+.pin-popup-body { padding: 10px 12px 12px; }
+.pin-popup-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; color: #fff; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.pin-popup-venue { font-size: 0.72rem; color: #94a3b8; margin-bottom: 2px; }
+.pin-popup-event { font-size: 0.92rem; font-weight: 700; color: #f1f5f9; line-height: 1.25; margin-bottom: 4px; }
+.pin-popup-meta { font-size: 0.72rem; color: #64748b; margin-bottom: 10px; }
+.pin-popup-btn { display: block; text-align: center; background: #7c3aed; color: #fff !important; text-decoration: none; padding: 8px; border-radius: 8px; font-weight: 600; font-size: 0.82rem; transition: background 0.15s; }
+.pin-popup-btn:hover { background: #6d28d9; }
 
-.custom-pin:hover .pin-tooltip {
-    opacity: 1;
-}
+.leaflet-control-zoom a { background: #1a1a2e !important; color: #f1f5f9 !important; border-color: rgba(124,58,237,0.4) !important; }
+.leaflet-control-zoom a:hover { background: #7c3aed !important; }
 
-.pin-tooltip img {
-    width: 100%;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 6px;
-    display: block;
-}
-
-.pin-tooltip-name {
-    font-size: 0.72rem;
-    color: #94a3b8;
-    text-align: center;
-    margin-top: 5px;
-    padding: 0 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.leaflet-control-zoom a {
-    background: #1a1a2e !important;
-    color: #f1f5f9 !important;
-    border-color: rgba(124,58,237,0.4) !important;
-}
-
-.leaflet-control-zoom a:hover {
-    background: #7c3aed !important;
+@@media (max-width: 600px) {
+    .map-filter { top: 10px; left: 10px; padding: 10px; min-width: 140px; }
+    .filter-item { font-size: 0.78rem; }
 }
 </style>

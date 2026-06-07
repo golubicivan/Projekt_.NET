@@ -108,6 +108,13 @@
         <span asp-validation-for="PosterUrl" class="text-danger"></span>
     </div>
 
+    <div class="form-group">
+        <label class="ze-checkbox">
+            <input asp-for="IsFeatured" type="checkbox" />
+            <span>⭐ Istakni ovaj event na karti (spotlight efekt)</span>
+        </label>
+    </div>
+
     <div style="display:flex;gap:12px;margin-top:24px">
         <button type="submit" class="btn-primary-custom" style="flex:1">Kreiraj event</button>
         <a href="/eventi" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>

@@ -119,18 +119,21 @@
             if (form.dataset.initialized) return;
             form.dataset.initialized = 'true';
 
-            var input = form.querySelector('[name="q"]');
             var endpoint = form.dataset.ajaxSearch;
             var target = document.querySelector(form.dataset.target);
-            if (!input || !target) return;
+            if (!target) return;
 
             var timer = null;
 
-            input.addEventListener('input', function () {
-                if (timer) clearTimeout(timer);
-                timer = setTimeout(function () {
-                    fetchList();
-                }, 300);
+            // Tekstualni inputi -> debounce; selecti -> odmah
+            form.querySelectorAll('input[type="text"], input:not([type])').forEach(function (inp) {
+                inp.addEventListener('input', function () {
+                    if (timer) clearTimeout(timer);
+                    timer = setTimeout(fetchList, 300);
+                });
+            });
+            form.querySelectorAll('select').forEach(function (sel) {
+                sel.addEventListener('change', fetchList);
             });
 
             form.addEventListener('submit', function (e) {
@@ -139,13 +142,18 @@
             });
 
             function fetchList() {
-                var query = input.value.trim();
+                // Skupi sve form vrijednosti (q, type, status, minRating...)
+                var params = new URLSearchParams();
+                form.querySelectorAll('input, select').forEach(function (el) {
+                    if (!el.name) return;
+                    if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+                    if (el.value !== '') params.append(el.name, el.value);
+                });
                 showSpinner(target);
-                fetch(endpoint + '?q=' + encodeURIComponent(query))
+                fetch(endpoint + '?' + params.toString())
                     .then(function (r) { return r.text(); })
                     .then(function (html) {
                         target.innerHTML = html;
-                        // re-init dynamic content (datepickeri, autocomplete, itd.)
                         initDatePickers();
                         initAutocomplete();
                     });
