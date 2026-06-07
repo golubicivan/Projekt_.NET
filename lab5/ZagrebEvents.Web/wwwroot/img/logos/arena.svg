@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" fill="#0b0f1a"/>
-  <ellipse cx="50" cy="50" rx="34" ry="20" fill="none" stroke="#38bdf8" stroke-width="4"/>
-  <ellipse cx="50" cy="50" rx="20" ry="11" fill="none" stroke="#0ea5e9" stroke-width="3"/>
-  <text x="50" y="90" font-family="Arial" font-size="14" font-weight="800" fill="#7dd3fc" text-anchor="middle">ARENA</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#0369a1"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="14" fill="url(#g)"/>
+  <text x="50" y="54" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central">AZ</text>
 </svg>
