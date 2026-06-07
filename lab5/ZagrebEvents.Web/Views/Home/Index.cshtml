@@ -111,7 +111,7 @@
             </div>`;
 
         const marker = L.marker([venue.lat, venue.lng], { icon });
-        marker.bindPopup(popupHtml, { className: 'ze-popup', minWidth: 200, maxWidth: 220 });
+        marker.bindPopup(popupHtml, { className: 'ze-popup', minWidth: 260, maxWidth: 280 });
         allMarkers.push({ marker, type: ev.type });
     });
 
@@ -209,13 +209,13 @@
 .ze-popup .leaflet-popup-content { margin: 0; width: 100% !important; }
 .ze-popup .leaflet-popup-tip { background: #12121a; border: 1px solid rgba(124,58,237,0.4); }
 .ze-popup a.leaflet-popup-close-button { color: #94a3b8; padding: 6px 8px 0 0; }
-.pin-popup img { width: 100%; height: 110px; object-fit: cover; display: block; }
-.pin-popup-body { padding: 10px 12px 12px; }
-.pin-popup-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; color: #fff; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-.pin-popup-venue { font-size: 0.72rem; color: #94a3b8; margin-bottom: 2px; }
-.pin-popup-event { font-size: 0.92rem; font-weight: 700; color: #f1f5f9; line-height: 1.25; margin-bottom: 4px; }
-.pin-popup-meta { font-size: 0.72rem; color: #64748b; margin-bottom: 10px; }
-.pin-popup-btn { display: block; text-align: center; background: #7c3aed; color: #fff !important; text-decoration: none; padding: 8px; border-radius: 8px; font-weight: 600; font-size: 0.82rem; transition: background 0.15s; }
+.pin-popup img { width: 100%; height: 130px; object-fit: cover; display: block; }
+.pin-popup-body { padding: 12px 14px 14px; }
+.pin-popup-badge { display: inline-block; padding: 3px 9px; border-radius: 12px; color: #fff; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+.pin-popup-venue { font-size: 0.76rem; color: #94a3b8; margin-bottom: 3px; }
+.pin-popup-event { font-size: 1rem; font-weight: 700; color: #f1f5f9; line-height: 1.3; margin-bottom: 6px; }
+.pin-popup-meta { font-size: 0.76rem; color: #94a3b8; margin-bottom: 12px; }
+.pin-popup-btn { display: block; text-align: center; background: #7c3aed; color: #fff !important; text-decoration: none; padding: 9px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; transition: background 0.15s; }
 .pin-popup-btn:hover { background: #6d28d9; }
 
 .leaflet-control-zoom a { background: #1a1a2e !important; color: #f1f5f9 !important; border-color: rgba(124,58,237,0.4) !important; }
