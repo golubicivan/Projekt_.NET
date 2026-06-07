@@ -26,6 +26,9 @@ namespace ZagrebEvents.Model
 
         public int AgeLimit { get; set; }
 
+        // Istaknuti event - na karti dobiva spotlight/glow efekt
+        public bool IsFeatured { get; set; }
+
         // Soft delete: null = aktivan, popunjen = obrisan
         public DateTime? DeletedAt { get; set; }
 

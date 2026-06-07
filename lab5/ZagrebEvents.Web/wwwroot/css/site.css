@@ -221,6 +221,7 @@ p {
     z-index: 1100;
     width: var(--sidebar-width);
     height: 100vh;
+    height: 100dvh; /* dinamička visina viewporta - rješava skrivanje dna na mobitelu */
     background: var(--color-surface-1);
     border-left: 1px solid var(--color-border);
     display: flex;
@@ -230,6 +231,8 @@ p {
     box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom, 24px);
 }
 
 .sidebar--open {
@@ -1724,3 +1727,8 @@ a { transition: color 0.15s ease; }
 .ze-dropzone.dropzone:hover { border-color: #7c3aed; }
 .ze-dropzone .dz-message { color: #94a3b8; font-size: 0.95rem; }
 .ze-dropzone .dz-preview .dz-image { border-radius: 8px; }
+
+
+/* Checkbox label (npr. istaknuti event) */
+.ze-checkbox { display: flex; align-items: center; gap: 10px; cursor: pointer; color: #cbd5e1; font-size: 0.92rem; }
+.ze-checkbox input { width: 18px; height: 18px; accent-color: #7c3aed; cursor: pointer; }

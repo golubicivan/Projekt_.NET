@@ -179,7 +179,8 @@ namespace ZagrebEvents.Web.Controllers
 
             var ok = await TryUpdateModelAsync(ev, "",
                 e => e.Name, e => e.Description, e => e.StartTime, e => e.EndTime,
-                e => e.Type, e => e.EntryPrice, e => e.PosterUrl, e => e.AgeLimit, e => e.VenueId);
+                e => e.Type, e => e.EntryPrice, e => e.PosterUrl, e => e.AgeLimit,
+                e => e.IsFeatured, e => e.VenueId);
 
             // Ako mijenja venue, mora smjeti upravljati i novim venueom
             if (!CanManageVenueId(ev.VenueId))

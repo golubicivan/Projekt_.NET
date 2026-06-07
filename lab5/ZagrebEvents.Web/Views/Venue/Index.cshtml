@@ -21,12 +21,21 @@
 
 @if (TempData["Success"] != null) { <div class="ze-alert-success" style="margin-bottom:16px">✓ @TempData["Success"]</div> }
 
-<form data-ajax-search="/Venue/SearchPartial" data-target="#venue-list" style="margin-bottom:24px">
-    <div style="position:relative">
+@{ var selType = (int?)ViewBag.Type; }
+<form data-ajax-search="/Venue/SearchPartial" data-target="#venue-list"
+      style="margin-bottom:24px;display:flex;gap:12px;flex-wrap:wrap">
+    <div style="position:relative;flex:1;min-width:240px">
         <input type="text" name="q" value="@ViewBag.Query" placeholder="Pretraži lokacije..."
                class="ze-input" style="padding-left:42px" autocomplete="off" />
         <span style="position:absolute;left:14px;top:13px;opacity:0.5">🔍</span>
     </div>
+    <select name="type" class="ze-input" style="width:auto;min-width:180px">
+        <option value="">Svi tipovi</option>
+        <option value="0" selected="@(selType == 0)">Klub</option>
+        <option value="1" selected="@(selType == 1)">Bar</option>
+        <option value="2" selected="@(selType == 2)">Kafić</option>
+        <option value="3" selected="@(selType == 3)">Open Air</option>
+    </select>
 </form>
 
 <div id="venue-list">

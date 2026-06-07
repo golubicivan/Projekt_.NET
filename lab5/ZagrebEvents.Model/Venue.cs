@@ -32,6 +32,10 @@ namespace ZagrebEvents.Model
         [MaxLength(500)]
         public string ImageUrl { get; set; } = "";
 
+        // Logo venuea (prikazuje se u krugu na karti). Ako prazno, koriste se inicijali.
+        [MaxLength(500)]
+        public string LogoUrl { get; set; } = "";
+
         // Soft delete
         public DateTime? DeletedAt { get; set; }
 
@@ -47,6 +51,19 @@ namespace ZagrebEvents.Model
 
         // N-N: korisnici koji imaju ovaj venue u favorites
         public virtual ICollection<User> FavoritedByUsers { get; set; } = new List<User>();
+
+        // Inicijali venuea za prikaz u krugu na karti kad nema logotipa
+        [NotMapped]
+        public string Initials
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(Name)) return "?";
+                var words = Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (words.Length == 1) return words[0].Substring(0, Math.Min(2, words[0].Length)).ToUpper();
+                return (words[0][0].ToString() + words[1][0]).ToUpper();
+            }
+        }
 
         public int AvailableTablesCount(int eventId)
         {

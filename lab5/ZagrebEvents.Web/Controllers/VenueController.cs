@@ -15,35 +15,38 @@ namespace ZagrebEvents.Web.Controllers
 
         [Route("lokacije")]
         [Route("[controller]/[action]")]
-        public IActionResult Index(string? q = null)
+        public IActionResult Index(string? q = null, int? type = null)
         {
-            var query = _db.Venues
-                .Include(v => v.Events)
-                .Where(v => v.DeletedAt == null);
-
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                query = query.Where(v => v.Name.Contains(q) || v.Address.Contains(q));
-            }
-
             ViewBag.Query = q;
-            return View(query.OrderBy(v => v.Name).ToList());
+            ViewBag.Type = type;
+            return View(FilterVenues(q, type));
         }
 
         [HttpGet]
         [Route("Venue/SearchPartial")]
-        public IActionResult SearchPartial(string? q = null)
+        public IActionResult SearchPartial(string? q = null, int? type = null)
+        {
+            return PartialView("_VenueListPartial", FilterVenues(q, type));
+        }
+
+        // Zajednička logika filtriranja + sortiranja po tipu
+        private List<Venue> FilterVenues(string? q, int? type)
         {
             var query = _db.Venues
                 .Include(v => v.Events)
                 .Where(v => v.DeletedAt == null);
 
             if (!string.IsNullOrWhiteSpace(q))
-            {
                 query = query.Where(v => v.Name.Contains(q) || v.Address.Contains(q));
+
+            if (type.HasValue)
+            {
+                var vt = (VenueType)type.Value;
+                query = query.Where(v => v.Type == vt);
             }
 
-            return PartialView("_VenueListPartial", query.OrderBy(v => v.Name).ToList());
+            // Sortiraj po tipu pa po nazivu
+            return query.OrderBy(v => v.Type).ThenBy(v => v.Name).ToList();
         }
 
         [Route("lokacija/{id:int}")]
@@ -99,7 +102,7 @@ namespace ZagrebEvents.Web.Controllers
             var ok = await TryUpdateModelAsync(venue, "",
                 v => v.Name, v => v.Address, v => v.Latitude, v => v.Longitude,
                 v => v.Capacity, v => v.WorkingHours, v => v.ContactPhone,
-                v => v.Description, v => v.Type, v => v.ImageUrl);
+                v => v.Description, v => v.Type, v => v.ImageUrl, v => v.LogoUrl);
 
             if (!ok || !ModelState.IsValid) return View("Edit", venue);
 
