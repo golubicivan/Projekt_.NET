@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Dovrši registraciju";
+    var email = ViewBag.Email as string ?? "";
+    var name = ViewBag.Name as string ?? "";
+    var provider = ViewBag.Provider as string ?? "Google";
+    var returnUrl = ViewBag.ReturnUrl as string;
+    var nameParts = name.Split(' ', 2);
+    var firstName = nameParts.Length > 0 ? nameParts[0] : "";
+    var lastName = nameParts.Length > 1 ? nameParts[1] : "";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Dovrši registraciju</h1>
+            <p class="text-muted-ze">Prijavljen si preko @provider. Unesi još OIB i JMBG.</p>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="ze-alert-danger">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <form method="post" action="/Account/ExternalLoginConfirmation" class="ze-form">
+            @Html.AntiForgeryToken()
+            @if (!string.IsNullOrEmpty(returnUrl))
+            {
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+            }
+
+            <div class="form-group">
+                <label class="ze-label">Email</label>
+                <input type="email" value="@email" class="ze-input" disabled style="opacity:0.6" />
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="ze-label">Ime</label>
+                    <input type="text" name="firstName" value="@firstName" class="ze-input" required />
+                </div>
+                <div class="form-group">
+                    <label class="ze-label">Prezime</label>
+                    <input type="text" name="lastName" value="@lastName" class="ze-input" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="ze-label">OIB (11 znamenki)</label>
+                    <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" required />
+                </div>
+                <div class="form-group">
+                    <label class="ze-label">JMBG (13 znamenki)</label>
+                    <input type="text" name="jmbg" class="ze-input" pattern="[0-9]{13}" maxlength="13" required />
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary-custom" style="width:100%;margin-top:8px">Dovrši registraciju</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.auth-page { max-width: 540px; margin: 40px auto; padding: 0 20px; }
+.auth-card { background: #12121a; border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 32px; }
+.auth-header { text-align: center; margin-bottom: 24px; }
+.auth-header h1 { font-size: 1.8rem; font-weight: 700; color: #f1f5f9; margin: 0 0 6px; }
+</style>

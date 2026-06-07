@@ -1,0 +1,63 @@
+@model PriceListItem
+@{ ViewData["Title"] = "Nova stavka cjenika"; }
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <a href="/cjenik">Cjenik</a> › <span>Nova</span></nav>
+}
+
+<div class="ze-page-header"><h1>Nova stavka cjenika</h1></div>
+
+<form asp-action="Create" asp-controller="PriceListItem" method="post" class="ze-form" style="max-width:600px">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
+
+    <div class="form-group">
+        <label asp-for="ItemName" class="ze-label">Naziv artikla *</label>
+        <input asp-for="ItemName" class="ze-input" required />
+        <span asp-validation-for="ItemName" class="text-danger"></span>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Price" class="ze-label">Cijena (€) *</label>
+            <input asp-for="Price" type="number" step="0.10" min="0" class="ze-input" required />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Category" class="ze-label">Kategorija</label>
+            <input asp-for="Category" class="ze-input" placeholder="Piće, Hrana, Ulaznica..." />
+        </div>
+    </div>
+
+    @if (Model.VenueId > 0 && Model.Venue != null)
+    {
+        <div class="form-group">
+            <label class="ze-label">Lokacija (preodabrana)</label>
+            <div class="ze-locked-field">
+                <span class="ze-locked-icon">📍</span>
+                <span class="ze-locked-text"><strong>@Model.Venue.Name</strong> <small class="text-muted-ze">— @Model.Venue.Address</small></span>
+                <a href="/PriceListItem/Create" class="ze-locked-clear" title="Promijeni lokaciju">✕</a>
+            </div>
+            <input type="hidden" name="VenueId" value="@Model.VenueId" />
+        </div>
+    }
+    else
+    {
+        @await Html.PartialAsync("_AutocompleteDropdown", new ZagrebEvents.Web.Models.AutocompleteModel
+        {
+            Name = "VenueId",
+            InitialId = Model.VenueId > 0 ? Model.VenueId : null,
+            InitialLabel = Model.Venue?.Name ?? "",
+            Endpoint = "/Api/SearchVenues",
+            Label = "Lokacija",
+            Required = true
+        })
+    }
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Kreiraj</button>
+        <a href="/cjenik" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

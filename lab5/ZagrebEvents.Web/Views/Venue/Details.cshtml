@@ -1,0 +1,339 @@
+@model Venue
+@inject ZagrebEvents.DAL.ZagrebEventsDbContext Db
+@using Microsoft.EntityFrameworkCore
+@{
+    ViewData["Title"] = Model.Name;
+    // "isAdmin" ovdje znači "smije upravljati ovim venueom" = Admin ILI Owner ovog venuea
+    var isAdmin = User.CanManageVenue(Model.OwnerAppUserId);
+    var upcomingEvents = Model.Events.Where(e => e.IsUpcoming && e.DeletedAt == null).OrderBy(e => e.StartTime).ToList();
+    var pastEvents = Model.Events.Where(e => !e.IsUpcoming && e.DeletedAt == null).OrderByDescending(e => e.StartTime).ToList();
+
+    // Dohvati sve rezervacije za evente ovog venuea (samo za onoga tko upravlja)
+    List<Reservation> venueReservations = new();
+    if (isAdmin)
+    {
+        var eventIds = Model.Events.Select(e => e.Id).ToList();
+        venueReservations = Db.Reservations
+            .Include(r => r.User)
+            .Include(r => r.Event)
+            .Include(r => r.Table)
+            .Where(r => eventIds.Contains(r.EventId))
+            .OrderByDescending(r => r.CreatedAt)
+            .ToList();
+    }
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/lokacije">Lokacije</a> › <span>@Model.Name</span>
+</nav>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="ze-alert-success" style="margin-bottom:16px">✓ @TempData["Success"]</div>
+}
+
+<div class="venue-detail">
+    <div class="venue-hero">
+        <img src="@Model.ImageUrl" alt="@Model.Name"
+             onerror="this.src='https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=1200'" />
+        <div class="venue-hero-overlay">
+            <span class="venue-type-badge-lg">@Model.Type</span>
+            <h1>@Model.Name</h1>
+            <p>📍 @Model.Address</p>
+        </div>
+    </div>
+
+    @* ============= ADMIN PANEL — BRZE AKCIJE ============= *@
+    @if (isAdmin)
+    {
+        <div class="admin-quick-actions">
+            <div class="admin-quick-title">⚡ Admin akcije za <strong>@Model.Name</strong></div>
+            <div class="admin-quick-buttons">
+                <a href="/Event/Create?venueId=@Model.Id" class="quick-btn quick-btn-event">
+                    <span class="quick-btn-icon">🎉</span>
+                    <span>Novi event</span>
+                </a>
+                <a href="/Table/Create?venueId=@Model.Id" class="quick-btn quick-btn-table">
+                    <span class="quick-btn-icon">🪑</span>
+                    <span>Novi stol</span>
+                </a>
+                <a href="/PriceListItem/Create?venueId=@Model.Id" class="quick-btn quick-btn-price">
+                    <span class="quick-btn-icon">💰</span>
+                    <span>Nova stavka cjenika</span>
+                </a>
+                <a href="/Venue/Edit/@Model.Id" class="quick-btn quick-btn-edit">
+                    <span class="quick-btn-icon">✎</span>
+                    <span>Uredi lokaciju</span>
+                </a>
+            </div>
+        </div>
+    }
+
+    <div class="venue-detail-grid">
+        <div class="venue-main">
+            <div class="detail-section">
+                <h2>O lokaciji</h2>
+                <p>@Model.Description</p>
+            </div>
+
+            <div class="detail-section event-info-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                <div class="ze-stat-card"><div class="stat-label">Kapacitet</div><div class="stat-value">@Model.Capacity</div></div>
+                <div class="ze-stat-card"><div class="stat-label">Radno vrijeme</div><div class="stat-value" style="font-size:1rem">@Model.WorkingHours</div></div>
+                <div class="ze-stat-card"><div class="stat-label">Kontakt</div><div class="stat-value" style="font-size:0.9rem">@Model.ContactPhone</div></div>
+            </div>
+
+            <div class="detail-section">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <h2>Nadolazeći eventi (@upcomingEvents.Count)</h2>
+                    @if (isAdmin)
+                    {
+                        <a href="/Event/Create?venueId=@Model.Id" class="btn-primary-custom" style="font-size:0.8rem;padding:6px 12px">➕ Dodaj event</a>
+                    }
+                </div>
+                @if (upcomingEvents.Any())
+                {
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                        @foreach (var ev in upcomingEvents)
+                        {
+                            <div class="venue-event-row">
+                                <a href="/event/@ev.Id" style="flex:1;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit">
+                                    <span class="event-badge" style="background:@ev.TypeColor;position:static;font-size:0.7rem">@ev.TypeIcon @ev.TypeLabel</span>
+                                    <span class="venue-event-name">@ev.Name</span>
+                                    <span class="text-muted-ze">@ev.StartTime.ToString("dd.MM. HH:mm")</span>
+                                    <span style="color:#10b981;font-weight:600">@(ev.EntryPrice == 0 ? "Besplatno" : $"{ev.EntryPrice:F0}€")</span>
+                                </a>
+                                @if (isAdmin)
+                                {
+                                    <a href="/Event/Edit/@ev.Id" class="btn-mini" title="Uredi">✎</a>
+                                    <form method="post" action="/Event/Delete/@ev.Id" style="display:inline" data-confirm-delete="Obrisati event '@ev.Name'?">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-mini btn-del" title="Obriši">🗑️</button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted-ze">Nema nadolazećih evenata.</p>
+                }
+            </div>
+
+            @if (isAdmin && pastEvents.Any())
+            {
+                <div class="detail-section">
+                    <h2>Prošli eventi <small class="text-muted-ze" style="font-size:0.7rem;font-weight:400">(samo admin vidi)</small></h2>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                        @foreach (var ev in pastEvents)
+                        {
+                            <a href="/event/@ev.Id" class="venue-event-row" style="opacity:0.6">
+                                <span class="event-badge" style="background:@ev.TypeColor;position:static;font-size:0.7rem">@ev.TypeIcon @ev.TypeLabel</span>
+                                <span class="venue-event-name">@ev.Name</span>
+                                <span class="text-muted-ze">@ev.StartTime.ToString("dd.MM.yyyy")</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+
+            @* ============= REZERVACIJE — samo za admina ============= *@
+            @if (isAdmin)
+            {
+                <div class="detail-section">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <h2>🗓️ Rezervacije za ovu lokaciju (@venueReservations.Count)</h2>
+                    </div>
+                    @if (venueReservations.Any())
+                    {
+                        <table class="ze-table" style="margin-top:12px">
+                            <thead>
+                                <tr><th>#</th><th>Korisnik</th><th>Event</th><th>Stol</th><th>Gosti</th><th>Status</th><th>Akcije</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in venueReservations)
+                                {
+                                    <tr>
+                                        <td class="text-muted-ze">#@r.Id</td>
+                                        <td style="font-weight:600">@r.User?.FullName</td>
+                                        <td><a href="/event/@r.EventId" style="color:#7c3aed;text-decoration:none">@r.Event?.Name</a></td>
+                                        <td class="text-muted-ze">Stol @r.Table?.TableNumber</td>
+                                        <td class="text-muted-ze">@r.NumberOfGuests 👥</td>
+                                        <td><span style="color:@r.StatusColor;font-weight:600">@r.StatusLabel</span></td>
+                                        <td>
+                                            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                                                @if (r.Status != ReservationStatus.Confirmed)
+                                                {
+                                                    <form method="post" action="/Reservation/SetStatus/@r.Id" style="display:inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Confirmed)" />
+                                                        <input type="hidden" name="returnUrl" value="/lokacija/@Model.Id" />
+                                                        <button type="submit" class="btn-action btn-confirm" title="Potvrdi">✓</button>
+                                                    </form>
+                                                }
+                                                @if (r.Status != ReservationStatus.Cancelled)
+                                                {
+                                                    <form method="post" action="/Reservation/SetStatus/@r.Id" style="display:inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Cancelled)" />
+                                                        <input type="hidden" name="returnUrl" value="/lokacija/@Model.Id" />
+                                                        <button type="submit" class="btn-action btn-cancel" title="Otkaži">✗</button>
+                                                    </form>
+                                                }
+                                                @if (r.Status == ReservationStatus.Cancelled)
+                                                {
+                                                    <form method="post" action="/Reservation/SetStatus/@r.Id" style="display:inline">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="status" value="@((int)ReservationStatus.Pending)" />
+                                                        <input type="hidden" name="returnUrl" value="/lokacija/@Model.Id" />
+                                                        <button type="submit" class="btn-action btn-pending" title="Vrati na čekanje">⏳</button>
+                                                    </form>
+                                                }
+                                                <a href="/Reservation/Details/@r.Id" class="btn-action btn-detail" title="Detalji">👁</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted-ze">Nema rezervacija za evente ove lokacije.</p>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="venue-sidebar">
+            @* STOLOVI *@
+            <div class="detail-section">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <h3 style="margin:0">Stolovi (@Model.Tables.Count)</h3>
+                    @if (isAdmin)
+                    {
+                        <a href="/Table/Create?venueId=@Model.Id" class="btn-mini" title="Dodaj stol" style="background:rgba(124,58,237,0.15);color:#7c3aed;padding:4px 10px">➕</a>
+                    }
+                </div>
+                @foreach (var table in Model.Tables.OrderBy(t => t.TableNumber))
+                {
+                    <div class="table-card" style="margin-bottom:8px;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:8px">
+                        <span style="font-weight:600">Stol @table.TableNumber</span>
+                        <span class="@(table.Zone == TableZone.VIP ? "zone-vip" : "zone-regular")">@table.Zone</span>
+                        <span class="text-muted-ze">@table.SeatCount 👥</span>
+                        @if (isAdmin)
+                        {
+                            <a href="/Table/Edit/@table.Id" class="btn-mini" title="Uredi">✎</a>
+                            <form method="post" action="/Table/Delete/@table.Id" style="display:inline" data-confirm-delete="Obrisati stol @table.TableNumber?">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-mini btn-del">🗑️</button>
+                            </form>
+                        }
+                    </div>
+                }
+                @if (!Model.Tables.Any())
+                {
+                    <p class="text-muted-ze" style="font-size:0.85rem">Nema stolova.</p>
+                }
+            </div>
+
+            @* CJENIK *@
+            <div class="detail-section">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <h3 style="margin:0">Cjenik (@Model.PriceList.Count)</h3>
+                    @if (isAdmin)
+                    {
+                        <a href="/PriceListItem/Create?venueId=@Model.Id" class="btn-mini" title="Dodaj stavku" style="background:rgba(16,185,129,0.15);color:#10b981;padding:4px 10px">➕</a>
+                    }
+                </div>
+                <table class="ze-table" style="font-size:0.82rem">
+                    <thead><tr><th>Artikl</th><th>Cijena</th>@if (isAdmin) { <th></th> }</tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.PriceList)
+                        {
+                            <tr>
+                                <td>@item.ItemName<br/><small class="text-muted-ze">@item.Category</small></td>
+                                <td style="color:#10b981;font-weight:600">@item.Price.ToString("F2") €</td>
+                                @if (isAdmin)
+                                {
+                                    <td style="white-space:nowrap">
+                                        <a href="/PriceListItem/Edit/@item.Id" class="btn-mini" title="Uredi">✎</a>
+                                        <form method="post" action="/PriceListItem/Delete/@item.Id" style="display:inline" data-confirm-delete="Obrisati '@item.ItemName'?">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-mini btn-del">🗑️</button>
+                                        </form>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                @if (!Model.PriceList.Any())
+                {
+                    <p class="text-muted-ze" style="font-size:0.85rem">Cjenik je prazan.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.venue-hero { position: relative; height: 380px; border-radius: 20px; overflow: hidden; margin-bottom: 24px; }
+.venue-hero img { width: 100%; height: 100%; object-fit: cover; }
+.venue-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(10,10,15,0.95) 0%, transparent 60%); display: flex; flex-direction: column; justify-content: flex-end; padding: 28px 32px; }
+.venue-hero-overlay h1 { font-size: 2rem; font-weight: 700; color: #f1f5f9; margin: 8px 0 4px; }
+.venue-hero-overlay p { color: #94a3b8; margin: 0; }
+.venue-type-badge-lg { display: inline-block; padding: 4px 12px; border-radius: 20px; background: rgba(6,182,212,0.8); color: #fff; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+
+/* Admin Quick Actions */
+.admin-quick-actions {
+    background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.05));
+    border: 1px solid rgba(124,58,237,0.3); border-radius: 16px;
+    padding: 20px; margin-bottom: 24px;
+}
+.admin-quick-title { color: #7c3aed; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+.admin-quick-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.quick-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px; border-radius: 10px; text-decoration: none;
+    background: #12121a; border: 1px solid rgba(255,255,255,0.08);
+    color: #f1f5f9; font-weight: 500; font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+.quick-btn:hover { transform: translateY(-2px); }
+.quick-btn-event:hover { border-color: #7c3aed; box-shadow: 0 4px 16px rgba(124,58,237,0.3); }
+.quick-btn-table:hover { border-color: #06b6d4; box-shadow: 0 4px 16px rgba(6,182,212,0.3); }
+.quick-btn-price:hover { border-color: #10b981; box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
+.quick-btn-edit:hover { border-color: #f59e0b; box-shadow: 0 4px 16px rgba(245,158,11,0.3); }
+.quick-btn-icon { font-size: 1.3rem; }
+
+.venue-detail-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
+.venue-event-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #12121a; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.2s; }
+.venue-event-row:hover { border-color: rgba(124,58,237,0.4); }
+.venue-event-name { flex: 1; font-size: 0.9rem; font-weight: 500; color: #f1f5f9; }
+.zone-vip { display: inline-block; padding: 2px 8px; border-radius: 10px; background: rgba(124,58,237,0.2); color: #7c3aed; font-size: 0.7rem; font-weight: 600; }
+.zone-regular { display: inline-block; padding: 2px 8px; border-radius: 10px; background: rgba(6,182,212,0.15); color: #06b6d4; font-size: 0.7rem; font-weight: 600; }
+.table-card { background: #12121a; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; }
+
+.btn-mini { background: transparent; border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; text-decoration: none; color: #94a3b8; transition: all 0.15s; }
+.btn-mini:hover { background: rgba(124,58,237,0.2); color: #7c3aed; }
+.btn-del:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
+.btn-action { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; border: none; font-size: 0.85rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+.btn-confirm { background: rgba(16,185,129,0.15); color: #10b981; }
+.btn-confirm:hover { background: #10b981; color: #fff; }
+.btn-cancel { background: rgba(239,68,68,0.15); color: #ef4444; }
+.btn-cancel:hover { background: #ef4444; color: #fff; }
+.btn-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.btn-pending:hover { background: #f59e0b; color: #fff; }
+.btn-detail { background: rgba(255,255,255,0.05); color: #94a3b8; }
+.btn-detail:hover { background: rgba(124,58,237,0.2); color: #7c3aed; }
+
+@@media (max-width: 768px) {
+    .venue-detail-grid { grid-template-columns: 1fr; }
+    .venue-hero { height: 240px; }
+    .admin-quick-buttons { flex-direction: column; }
+    .quick-btn { width: 100%; justify-content: center; }
+}
+</style>

@@ -1,0 +1,62 @@
+@model Reservation
+@{
+    ViewData["Title"] = "Uredi rezervaciju";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/rezervacije">Rezervacije</a> ›
+    <a href="/Reservation/Details/@Model.Id">#@Model.Id</a> › <span>Uredi</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>Uredi rezervaciju #@Model.Id</h1>
+    <p class="text-muted-ze">Event: <strong>@Model.Event?.Name</strong> · @Model.Event?.StartTime.ToString("dd.MM.yyyy HH:mm")</p>
+</div>
+
+<form asp-action="Edit" asp-controller="Reservation" asp-route-id="@Model.Id" method="post" class="ze-form" style="max-width:700px">
+    @Html.AntiForgeryToken()
+
+    <div class="form-row">
+        <div class="form-group">
+            <label class="ze-label">Stol</label>
+            <select name="tableId" class="ze-input" required>
+                @foreach (var t in Model.Event?.Venue?.Tables ?? new List<Table>())
+                {
+                    var selected = t.Id == Model.TableId ? "selected" : "";
+                    <option value="@t.Id" selected="@(t.Id == Model.TableId)">
+                        Stol @t.TableNumber — @(t.Zone == TableZone.VIP ? "VIP" : "Regular"), @t.SeatCount mjesta
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="ze-label">Broj gostiju</label>
+            <input type="number" name="numberOfGuests" value="@Model.NumberOfGuests" min="1" max="20" class="ze-input" required />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="ze-label">Status</label>
+        <select name="status" class="ze-input" required>
+            <option value="0" selected="@(Model.Status == ReservationStatus.Pending)">⏳ Na čekanju</option>
+            <option value="1" selected="@(Model.Status == ReservationStatus.Confirmed)">✓ Potvrđeno</option>
+            <option value="2" selected="@(Model.Status == ReservationStatus.Cancelled)">✗ Otkazano</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label class="ze-label">Napomena</label>
+        <textarea name="note" class="ze-input" rows="3" placeholder="Posebni zahtjevi...">@Model.Note</textarea>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Spremi promjene</button>
+        <a href="/Reservation/Details/@Model.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

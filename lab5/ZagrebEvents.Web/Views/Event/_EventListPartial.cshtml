@@ -1,0 +1,42 @@
+@model List<Event>
+
+@if (!Model.Any())
+{
+    <div class="ze-empty-state">
+        <div style="font-size:3rem;margin-bottom:8px">🔎</div>
+        <p class="text-muted-ze">Nema rezultata.</p>
+    </div>
+}
+else
+{
+    <div class="event-grid">
+        @foreach (var ev in Model)
+        {
+            <a href="/event/@ev.Id" class="event-card-link">
+                <div class="event-card">
+                    <div class="event-card-poster">
+                        <img src="@ev.PosterUrl" alt="@ev.Name"
+                             onerror="this.src='https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=600'" />
+                        <span class="event-badge" style="background:@ev.TypeColor">
+                            @ev.TypeIcon @ev.TypeLabel
+                        </span>
+                        @if (!ev.IsUpcoming)
+                        {
+                            <span class="event-badge-past">Završeno</span>
+                        }
+                    </div>
+                    <div class="event-card-body">
+                        <h3 class="event-card-title">@ev.Name</h3>
+                        <div class="event-card-venue">📍 @ev.Venue?.Name</div>
+                        <div class="event-card-meta">
+                            <span>📅 @ev.StartTime.ToString("dd.MM.yyyy HH:mm")</span>
+                            <span class="event-card-price">
+                                @(ev.EntryPrice == 0 ? "Besplatno" : $"{ev.EntryPrice:F0} EUR")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        }
+    </div>
+}

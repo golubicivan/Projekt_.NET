@@ -1,0 +1,86 @@
+@model Venue
+@{
+    ViewData["Title"] = "Nova lokacija";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <a href="/lokacije">Lokacije</a> › <span>Nova</span></nav>
+}
+
+<div class="ze-page-header">
+    <h1>Nova lokacija</h1>
+</div>
+
+<form asp-action="Create" asp-controller="Venue" method="post" class="ze-form" style="max-width:800px">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
+
+    <div class="form-group">
+        <label asp-for="Name" class="ze-label">Naziv *</label>
+        <input asp-for="Name" class="ze-input" required />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Address" class="ze-label">Adresa</label>
+        <input asp-for="Address" class="ze-input" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Latitude" class="ze-label">Latitude (GPS)</label>
+            <input asp-for="Latitude" type="number" step="0.0001" class="ze-input" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Longitude" class="ze-label">Longitude (GPS)</label>
+            <input asp-for="Longitude" type="number" step="0.0001" class="ze-input" />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Capacity" class="ze-label">Kapacitet</label>
+            <input asp-for="Capacity" type="number" min="0" class="ze-input" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Type" class="ze-label">Tip</label>
+            <select asp-for="Type" class="ze-input">
+                <option value="0">Klub</option>
+                <option value="1">Bar</option>
+                <option value="2">Kafić</option>
+                <option value="3">Open Air</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="WorkingHours" class="ze-label">Radno vrijeme</label>
+            <input asp-for="WorkingHours" class="ze-input" placeholder="npr. 22:00 - 05:00" />
+        </div>
+        <div class="form-group">
+            <label asp-for="ContactPhone" class="ze-label">Telefon</label>
+            <input asp-for="ContactPhone" class="ze-input" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description" class="ze-label">Opis</label>
+        <textarea asp-for="Description" class="ze-input" rows="4"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ImageUrl" class="ze-label">URL slike</label>
+        <input asp-for="ImageUrl" type="url" class="ze-input" />
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Kreiraj</button>
+        <a href="/lokacije" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

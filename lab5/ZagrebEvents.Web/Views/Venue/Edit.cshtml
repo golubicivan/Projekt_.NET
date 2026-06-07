@@ -1,0 +1,98 @@
+@model Venue
+@{
+    ViewData["Title"] = $"Uredi: {Model.Name}";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <a href="/lokacije">Lokacije</a> ›
+<a href="/lokacija/@Model.Id">@Model.Name</a> › <span>Uredi</span></nav>
+}
+
+<div class="ze-page-header">
+    <h1>Uredi: @Model.Name</h1>
+</div>
+
+<form asp-action="Edit" asp-controller="Venue" asp-route-id="@Model.Id" method="post" class="ze-form" style="max-width:800px">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="ze-alert-danger" style="margin-bottom:16px"></div>
+
+    <div class="form-group">
+        <label asp-for="Name" class="ze-label">Naziv *</label>
+        <input asp-for="Name" class="ze-input" required />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Address" class="ze-label">Adresa</label>
+        <input asp-for="Address" class="ze-input" />
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Latitude" class="ze-label">Latitude</label>
+            <input asp-for="Latitude" type="number" step="0.0001" class="ze-input" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Longitude" class="ze-label">Longitude</label>
+            <input asp-for="Longitude" type="number" step="0.0001" class="ze-input" />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="Capacity" class="ze-label">Kapacitet</label>
+            <input asp-for="Capacity" type="number" min="0" class="ze-input" />
+        </div>
+        <div class="form-group">
+            <label asp-for="Type" class="ze-label">Tip</label>
+            <select asp-for="Type" class="ze-input">
+                <option value="0" selected="@(Model.Type == VenueType.Club)">Klub</option>
+                <option value="1" selected="@(Model.Type == VenueType.Bar)">Bar</option>
+                <option value="2" selected="@(Model.Type == VenueType.Cafe)">Kafić</option>
+                <option value="3" selected="@(Model.Type == VenueType.OpenAir)">Open Air</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label asp-for="WorkingHours" class="ze-label">Radno vrijeme</label>
+            <input asp-for="WorkingHours" class="ze-input" />
+        </div>
+        <div class="form-group">
+            <label asp-for="ContactPhone" class="ze-label">Telefon</label>
+            <input asp-for="ContactPhone" class="ze-input" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description" class="ze-label">Opis</label>
+        <textarea asp-for="Description" class="ze-input" rows="4"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ImageUrl" class="ze-label">URL slike</label>
+        <input asp-for="ImageUrl" type="url" class="ze-input" />
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:24px">
+        <button type="submit" class="btn-primary-custom" style="flex:1">Spremi</button>
+        <a href="/lokacija/@Model.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
+    </div>
+</form>
+
+<form method="post" action="/Venue/Delete/@Model.Id"
+      data-confirm-delete="Obrisati lokaciju '@Model.Name'?"
+      style="max-width:800px;margin-top:16px">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn-danger-custom" style="width:100%">🗑️ Obriši (soft delete)</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+.btn-danger-custom { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 20px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-danger-custom:hover { background: #ef4444; color: #fff; }
+</style>

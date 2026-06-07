@@ -1,0 +1,34 @@
+@model List<Table>
+@{
+    ViewData["Title"] = "Stolovi";
+    var isAdmin = User.IsInRole("Admin");
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <span>Stolovi</span></nav>
+}
+
+<div class="ze-page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div>
+        <h1>Stolovi</h1>
+        <p class="text-muted-ze">Pretraži po lokaciji</p>
+    </div>
+    @if (isAdmin)
+    {
+        <a href="/Table/Create" class="btn-primary-custom">➕ Novi stol</a>
+    }
+</div>
+
+@if (TempData["Success"] != null) { <div class="ze-alert-success" style="margin-bottom:16px">✓ @TempData["Success"]</div> }
+
+<form data-ajax-search="/Table/SearchPartial" data-target="#table-list" style="margin-bottom:24px">
+    <div style="position:relative">
+        <input type="text" name="q" value="@ViewBag.Query" placeholder="Pretraži stolove po lokaciji..."
+               class="ze-input" style="padding-left:42px" autocomplete="off" />
+        <span style="position:absolute;left:14px;top:13px;opacity:0.5">🔍</span>
+    </div>
+</form>
+
+<div id="table-list">
+    @await Html.PartialAsync("_TableListPartial", Model)
+</div>
