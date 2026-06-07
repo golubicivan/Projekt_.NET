@@ -10,8 +10,13 @@ namespace ZagrebEvents.Web.Controllers
     public class EventController : Controller
     {
         private readonly ZagrebEventsDbContext _db;
+        private readonly IWebHostEnvironment _env;
 
-        public EventController(ZagrebEventsDbContext db) => _db = db;
+        public EventController(ZagrebEventsDbContext db, IWebHostEnvironment env)
+        {
+            _db = db;
+            _env = env;
+        }
 
         // INDEX — lista evenata (admin vidi sve, ostali samo nadolazeće)
         [Route("eventi")]
@@ -238,6 +243,81 @@ namespace ZagrebEvents.Web.Controllers
 
             TempData["ReservationSuccess"] = $"Rezervacija za {guests} gostiju uspješno poslana! Čekajte potvrdu.";
             return RedirectToAction("Details", new { id = eventId });
+        }
+
+        // ===================== UPLOAD DATOTEKA (Dropzone) =====================
+
+        // POST: /Event/UploadAttachment?eventId=5  (Dropzone šalje multipart form data)
+        [HttpPost]
+        [Authorize(Roles = "Admin,Owner")]
+        public async Task<IActionResult> UploadAttachment(int eventId, IFormFile file)
+        {
+            var ev = _db.Events.FirstOrDefault(e => e.Id == eventId && e.DeletedAt == null);
+            if (ev == null) return NotFound();
+            if (!CanManageVenueId(ev.VenueId)) return Forbid();
+            if (file == null || file.Length == 0) return BadRequest("Datoteka je prazna.");
+
+            // Validacija veličine (max 5 MB) i ekstenzije
+            if (file.Length > 5 * 1024 * 1024)
+                return BadRequest("Datoteka je prevelika (max 5 MB).");
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext))
+                return BadRequest("Nedozvoljen tip datoteke.");
+
+            var uploadsPath = Path.Combine(_env.WebRootPath, "uploads", "events", eventId.ToString());
+            Directory.CreateDirectory(uploadsPath);
+
+            var storedName = Guid.NewGuid().ToString("N") + ext;
+            var fullPath = Path.Combine(uploadsPath, storedName);
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var attachment = new Attachment
+            {
+                EventId = eventId,
+                FileName = file.FileName,
+                FilePath = $"/uploads/events/{eventId}/{storedName}",
+                ContentType = file.ContentType,
+                FileSize = file.Length,
+                CreatedAt = DateTime.UtcNow
+            };
+            _db.Attachments.Add(attachment);
+            await _db.SaveChangesAsync();
+
+            return Json(new { success = true, id = attachment.Id });
+        }
+
+        // GET: /Event/GetAttachments?eventId=5  (AJAX učitavanje popisa)
+        [HttpGet]
+        public IActionResult GetAttachments(int eventId)
+        {
+            var attachments = _db.Attachments
+                .Where(a => a.EventId == eventId)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToList();
+            return PartialView("_AttachmentList", attachments);
+        }
+
+        // POST: /Event/DeleteAttachment  (AJAX brisanje)
+        [HttpPost]
+        [Authorize(Roles = "Admin,Owner")]
+        public IActionResult DeleteAttachment(int id)
+        {
+            var attachment = _db.Attachments.Include(a => a.Event).FirstOrDefault(a => a.Id == id);
+            if (attachment == null) return NotFound();
+            if (attachment.Event != null && !CanManageVenueId(attachment.Event.VenueId)) return Forbid();
+
+            // Obriši fizičku datoteku
+            var physicalPath = Path.Combine(_env.WebRootPath, attachment.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(physicalPath))
+                System.IO.File.Delete(physicalPath);
+
+            _db.Attachments.Remove(attachment);
+            _db.SaveChanges();
+            return Json(new { success = true });
         }
     }
 }

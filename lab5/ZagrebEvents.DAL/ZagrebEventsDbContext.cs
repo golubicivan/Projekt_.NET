@@ -20,6 +20,7 @@ namespace ZagrebEvents.DAL
         public DbSet<Reservation> Reservations { get; set; } = null!;
         public DbSet<Review> Reviews { get; set; } = null!;
         public DbSet<PriceListItem> PriceListItems { get; set; } = null!;
+        public DbSet<Attachment> Attachments { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -40,6 +40,9 @@ namespace ZagrebEvents.Model
         // 1-N: Event ima više recenzija
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
+        // 1-N: Event ima više priloženih datoteka
+        public virtual ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
+
         [NotMapped]
         public double AverageRating => Reviews != null && Reviews.Any() ? Reviews.Average(r => r.Rating) : 0;
 

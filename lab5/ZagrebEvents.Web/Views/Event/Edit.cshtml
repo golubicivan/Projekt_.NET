@@ -96,6 +96,21 @@
     </div>
 </form>
 
+@* ===================== DOKUMENTI / GALERIJA (Dropzone) ===================== *@
+<div class="detail-section" style="max-width:800px;margin-top:24px">
+    <h2>📎 Dokumenti i slike</h2>
+    <p class="text-muted-ze" style="font-size:0.85rem">Povuci datoteke ovdje ili klikni za upload (slike i PDF, max 5 MB).</p>
+
+    <form id="attachmentDz"
+          action="/Event/UploadAttachment?eventId=@Model.Id"
+          class="dropzone ze-dropzone"
+          enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <div id="attachmentList" style="margin-top:16px"></div>
+</div>
+
 @if (User.IsInRole("Admin"))
 {
     <form method="post" action="/Event/Delete/@Model.Id"
@@ -108,6 +123,45 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@5/dist/min/dropzone.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/dropzone@5/dist/min/dropzone.min.js"></script>
+    <script>
+        Dropzone.autoDiscover = false;
+        document.addEventListener('DOMContentLoaded', function () {
+            var token = document.querySelector('#attachmentDz input[name="__RequestVerificationToken"]').value;
+            var dz = new Dropzone("#attachmentDz", {
+                paramName: "file",
+                maxFilesize: 5, // MB
+                acceptedFiles: "image/*,application/pdf",
+                addRemoveLinks: false,
+                dictDefaultMessage: "📤 Povuci datoteke ovdje ili klikni",
+                headers: { "RequestVerificationToken": token },
+                params: { __RequestVerificationToken: token }
+            });
+            dz.on("success", function (file) {
+                dz.removeFile(file);
+                loadAttachments();
+            });
+            loadAttachments();
+        });
+
+        function loadAttachments() {
+            fetch("/Event/GetAttachments?eventId=@Model.Id")
+                .then(r => r.text())
+                .then(html => { document.getElementById("attachmentList").innerHTML = html; });
+        }
+
+        function deleteAttachment(id) {
+            if (!confirm("Obrisati ovu datoteku?")) return;
+            var token = document.querySelector('#attachmentDz input[name="__RequestVerificationToken"]').value;
+            var fd = new FormData();
+            fd.append("id", id);
+            fd.append("__RequestVerificationToken", token);
+            fetch("/Event/DeleteAttachment", { method: "POST", body: fd })
+                .then(r => r.json())
+                .then(() => loadAttachments());
+        }
+    </script>
 }
 
 <style>

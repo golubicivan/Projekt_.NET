@@ -1711,3 +1711,16 @@ a { transition: color 0.15s ease; }
     background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
 }
+
+
+/* Dropzone (upload) dark theme */
+.ze-dropzone.dropzone {
+    background: #12121a;
+    border: 2px dashed rgba(124,58,237,0.4);
+    border-radius: 12px;
+    color: #94a3b8;
+    min-height: 120px;
+}
+.ze-dropzone.dropzone:hover { border-color: #7c3aed; }
+.ze-dropzone .dz-message { color: #94a3b8; font-size: 0.95rem; }
+.ze-dropzone .dz-preview .dz-image { border-radius: 8px; }
