@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZagrebEvents.DAL", "ZagrebE
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZagrebEvents.Web", "ZagrebEvents.Web\ZagrebEvents.Web.csproj", "{97704B8B-A000-414B-A8E3-490045349647}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZagrebEvents.Tests", "ZagrebEvents.Tests\ZagrebEvents.Tests.csproj", "{3B64EE11-8F54-4AE1-92F9-AF5A3F38C22B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{97704B8B-A000-414B-A8E3-490045349647}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{97704B8B-A000-414B-A8E3-490045349647}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{97704B8B-A000-414B-A8E3-490045349647}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B64EE11-8F54-4AE1-92F9-AF5A3F38C22B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B64EE11-8F54-4AE1-92F9-AF5A3F38C22B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B64EE11-8F54-4AE1-92F9-AF5A3F38C22B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B64EE11-8F54-4AE1-92F9-AF5A3F38C22B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

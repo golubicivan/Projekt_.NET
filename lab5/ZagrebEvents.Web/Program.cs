@@ -86,11 +86,16 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var db = services.GetRequiredService<ZagrebEventsDbContext>();
-    db.Database.Migrate();   // primijeni migracije automatski
 
-    var userManager = services.GetRequiredService<UserManager<AppUser>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    await IdentitySeeder.SeedAsync(db, userManager, roleManager);
+    // Migracije samo za relacijske baze (InMemory u testovima ih ne podržava)
+    if (db.Database.IsRelational())
+    {
+        db.Database.Migrate();
+
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await IdentitySeeder.SeedAsync(db, userManager, roleManager);
+    }
 }
 
 if (!app.Environment.IsDevelopment())
