@@ -17,12 +17,13 @@
     <title>@ViewData["Title"] - GdjeCemo</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-grid.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ZagrebEvents.Web.styles.css" asp-append-version="true" />
-    <!-- Flatpickr (datepicker plugin) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <!-- Flatpickr (datepicker plugin) - self-hosted -->
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
 </head>
 <body>
 
@@ -192,9 +193,9 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Flatpickr (datepicker plugin) + hrvatska lokalizacija -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/hr.js"></script>
+    <!-- Flatpickr (datepicker plugin) + hrvatska lokalizacija - self-hosted -->
+    <script src="~/lib/flatpickr/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/l10n/hr.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
