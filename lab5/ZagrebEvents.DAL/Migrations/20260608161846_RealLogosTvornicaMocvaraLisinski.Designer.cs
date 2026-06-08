@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZagrebEvents.DAL;
 
@@ -11,9 +12,11 @@ using ZagrebEvents.DAL;
 namespace ZagrebEvents.DAL.Migrations
 {
     [DbContext(typeof(ZagrebEventsDbContext))]
-    partial class ZagrebEventsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260608161846_RealLogosTvornicaMocvaraLisinski")]
+    partial class RealLogosTvornicaMocvaraLisinski
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1765,7 +1768,7 @@ namespace ZagrebEvents.DAL.Migrations
                             Description = "Koncertni i klupski prostor s bogatim programom uživo.",
                             ImageUrl = "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
                             Latitude = 45.814599999999999,
-                            LogoUrl = "/img/logos/tvornica-emblem.png",
+                            LogoUrl = "/img/logos/tvornica-logo.png",
                             Longitude = 16.000800000000002,
                             Name = "Tvornica Kulture",
                             Type = 0,
@@ -1780,7 +1783,7 @@ namespace ZagrebEvents.DAL.Migrations
                             Description = "Alternativni klub uz Savu, dom rock i underground scene.",
                             ImageUrl = "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=800",
                             Latitude = 45.795000000000002,
-                            LogoUrl = "/img/logos/mocvara-emblem.png",
+                            LogoUrl = "/img/logos/mocvara-logo.png",
                             Longitude = 15.976000000000001,
                             Name = "Klub Močvara",
                             Type = 0,
@@ -1795,7 +1798,7 @@ namespace ZagrebEvents.DAL.Migrations
                             Description = "Industrijski bar s koncertima indie i rock bendova.",
                             ImageUrl = "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=800",
                             Latitude = 45.789999999999999,
-                            LogoUrl = "/img/logos/vintage-emblem.png",
+                            LogoUrl = "/img/logos/vintage.svg",
                             Longitude = 15.962999999999999,
                             Name = "Vintage Industrial Bar",
                             Type = 1,
@@ -1915,7 +1918,7 @@ namespace ZagrebEvents.DAL.Migrations
                             Description = "Prostor za umjetnost i događanja u bivšoj tvorničkoj hali.",
                             ImageUrl = "https://images.unsplash.com/photo-1504333638930-c8787321eee0?w=800",
                             Latitude = 45.811999999999998,
-                            LogoUrl = "/img/logos/lauba-emblem.png",
+                            LogoUrl = "/img/logos/lauba.svg",
                             Longitude = 15.945,
                             Name = "Lauba",
                             Type = 1,
@@ -1960,7 +1963,7 @@ namespace ZagrebEvents.DAL.Migrations
                             Description = "Koncertna dvorana za klasičnu i ozbiljnu glazbu.",
                             ImageUrl = "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=800",
                             Latitude = 45.802,
-                            LogoUrl = "/img/logos/lisinski.svg",
+                            LogoUrl = "/img/logos/lisinski-logo.png",
                             Longitude = 15.967000000000001,
                             Name = "KD Vatroslav Lisinski",
                             Type = 0,
@@ -1990,7 +1993,7 @@ namespace ZagrebEvents.DAL.Migrations
                             Description = "Najveći zagrebački park, domaćin open-air događanja.",
                             ImageUrl = "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800",
                             Latitude = 45.826000000000001,
-                            LogoUrl = "/img/logos/maksimir-emblem.png",
+                            LogoUrl = "/img/logos/maksimir.svg",
                             Longitude = 16.018000000000001,
                             Name = "Park Maksimir",
                             Type = 3,
