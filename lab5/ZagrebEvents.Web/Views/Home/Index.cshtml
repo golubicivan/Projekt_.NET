@@ -84,7 +84,7 @@
 
         // Sadržaj kruga: logo (ako postoji) ili inicijali venuea
         const inner = venue.logoUrl
-            ? `<img class="pin-logo" src="${venue.logoUrl}?v=3" alt="" loading="eager" onerror="this.parentNode.innerHTML='${escapeHtml(venue.initials)}'"/>`
+            ? `<img class="pin-logo" src="${venue.logoUrl}?v=5" alt="" loading="eager" onerror="this.parentNode.innerHTML='${escapeHtml(venue.initials)}'"/>`
             : `<span class="pin-initials">${escapeHtml(venue.initials)}</span>`;
 
         const featuredCls = ev.isFeatured ? ' pin-featured' : '';
@@ -178,7 +178,7 @@
     margin: 3px;
 }
 .venue-pin:hover .pin-ring { transform: scale(1.12); box-shadow: 0 6px 22px var(--pin-color); }
-.pin-logo { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.15); }
+.pin-logo { width: 100%; height: 100%; object-fit: cover; }
 .pin-initials { color: #f1f5f9; font-weight: 800; font-size: 1rem; letter-spacing: -0.5px; }
 .pin-star { position: absolute; top: -4px; right: -4px; font-size: 0.9rem; filter: drop-shadow(0 0 3px gold); }
 
