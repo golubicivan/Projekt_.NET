@@ -125,6 +125,10 @@
                     <div class="pin-popup-event">${escapeHtml(ev.name)}</div>
                     <div class="pin-popup-meta">📅 ${escapeHtml(ev.startTime)} · <span style="color:#10b981">${price}</span></div>
                     <a href="/Event/Details/${ev.id}" class="pin-popup-btn">Otvori event →</a>
+                    <div class="pin-popup-nav">
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${venue.lat},${venue.lng}" target="_blank" rel="noopener" title="Upute Google Maps">🗺️ Maps</a>
+                        <a href="https://waze.com/ul?ll=${venue.lat},${venue.lng}&navigate=yes" target="_blank" rel="noopener" title="Upute Waze">🚙 Waze</a>
+                    </div>
                 </div>
             </div>`;
 
@@ -173,6 +177,40 @@
             setTimeout(() => { welcome.remove(); }, 300);
         });
     })();
+
+    // ===== Moja lokacija (geolokacija) =====
+    let userMarker = null, userCircle = null;
+    const locateBtn = L.control({ position: 'bottomright' });
+    locateBtn.onAdd = function () {
+        const div = L.DomUtil.create('div', 'ze-locate');
+        div.innerHTML = '<button type="button" title="Prikaži moju lokaciju" aria-label="Moja lokacija">📍</button>';
+        L.DomEvent.disableClickPropagation(div);
+        div.querySelector('button').addEventListener('click', locateMe);
+        return div;
+    };
+    locateBtn.addTo(map);
+
+    function locateMe() {
+        if (!navigator.geolocation) { alert('Tvoj preglednik ne podržava geolokaciju.'); return; }
+        const btn = document.querySelector('.ze-locate button');
+        btn.classList.add('locating');
+        navigator.geolocation.getCurrentPosition(pos => {
+            btn.classList.remove('locating');
+            const ll = [pos.coords.latitude, pos.coords.longitude];
+            if (userMarker) { map.removeLayer(userMarker); map.removeLayer(userCircle); }
+            // krug tocnosti + pulsirajuca plava tocka
+            userCircle = L.circle(ll, { radius: pos.coords.accuracy, color: '#3b82f6', weight: 1, fillColor: '#3b82f6', fillOpacity: 0.12 }).addTo(map);
+            userMarker = L.marker(ll, {
+                icon: L.divIcon({ html: '<div class="user-dot"><div class="user-dot-pulse"></div></div>', className: '', iconSize: [22, 22], iconAnchor: [11, 11] })
+            }).addTo(map).bindPopup('<b style="color:#f1f5f9">📍 Tu si!</b>', { className: 'ze-popup' });
+            map.setView(ll, Math.max(map.getZoom(), 14));
+        }, err => {
+            btn.classList.remove('locating');
+            alert(err.code === 1
+                ? 'Pristup lokaciji je odbijen. Dozvoli lokaciju u pregledniku da je prikažemo na karti.'
+                : 'Lokaciju nije moguće dohvatiti (' + err.message + ').');
+        }, { enableHighAccuracy: true, timeout: 10000 });
+    }
 
     map.addLayer(cluster);
     refreshMarkers();
@@ -257,6 +295,38 @@
 
 .leaflet-control-zoom a { background: #1a1a2e !important; color: #f1f5f9 !important; border-color: rgba(124,58,237,0.4) !important; }
 .leaflet-control-zoom a:hover { background: #7c3aed !important; }
+
+/* Upute u popupu (Google Maps / Waze) */
+.pin-popup-nav { display: flex; gap: 8px; margin-top: 8px; }
+.pin-popup-nav a {
+    flex: 1; text-align: center; padding: 7px 4px; border-radius: 8px;
+    font-size: 0.78rem; font-weight: 600; text-decoration: none;
+    background: #1a1a2e; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1 !important;
+    transition: border-color 0.15s, color 0.15s;
+}
+.pin-popup-nav a:hover { border-color: #06b6d4; color: #06b6d4 !important; }
+
+/* Gumb Moja lokacija */
+.ze-locate button {
+    width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(124,58,237,0.4);
+    background: #1a1a2e; color: #f1f5f9; font-size: 1.15rem; cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5); transition: background 0.15s;
+}
+.ze-locate button:hover { background: #7c3aed; }
+.ze-locate button.locating { animation: ze-locating 1s linear infinite; }
+@@keyframes ze-locating { 50% { opacity: 0.4; } }
+
+/* Plava tocka korisnikove lokacije */
+.user-dot { position: relative; width: 22px; height: 22px; }
+.user-dot::after {
+    content: ''; position: absolute; inset: 4px; border-radius: 50%;
+    background: #3b82f6; border: 2.5px solid #fff; box-shadow: 0 0 8px rgba(59,130,246,0.9);
+}
+.user-dot-pulse {
+    position: absolute; inset: -6px; border-radius: 50%;
+    background: rgba(59,130,246,0.35); animation: ze-user-pulse 2s ease-out infinite;
+}
+@@keyframes ze-user-pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
 
 /* Welcome popup preko karte */
 .map-welcome {
