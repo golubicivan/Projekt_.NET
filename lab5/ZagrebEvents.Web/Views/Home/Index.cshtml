@@ -21,6 +21,21 @@
             <div class="filter-hint">Obrub pina = tip eventa · ⭐ = istaknuto</div>
         </div>
     </div>
+
+    <!-- Welcome popup: izbor sto zelis vidjeti prije karte -->
+    <div class="map-welcome" id="mapWelcome" hidden>
+        <div class="welcome-card">
+            <h2>Gdje ćemo večeras? 🎉</h2>
+            <p>Odaberi što želiš vidjeti na karti:</p>
+            <div class="welcome-options">
+                <label class="welcome-opt"><input type="checkbox" data-type="DJNight" checked /><span class="legend-dot" style="border-color:#7c3aed">🪩</span> DJ Noć</label>
+                <label class="welcome-opt"><input type="checkbox" data-type="Concert" checked /><span class="legend-dot" style="border-color:#ef4444">🎤</span> Koncert</label>
+                <label class="welcome-opt"><input type="checkbox" data-type="PubQuiz" checked /><span class="legend-dot" style="border-color:#f59e0b">📖</span> Pub Quiz</label>
+                <label class="welcome-opt"><input type="checkbox" data-type="Festival" checked /><span class="legend-dot" style="border-color:#f97316">🎪</span> Festival</label>
+            </div>
+            <button type="button" id="welcomeGo" class="welcome-go">Prikaži kartu →</button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -111,7 +126,7 @@
             </div>`;
 
         const marker = L.marker([venue.lat, venue.lng], { icon });
-        marker.bindPopup(popupHtml, { className: 'ze-popup', minWidth: 260, maxWidth: 280 });
+        marker.bindPopup(popupHtml, { className: 'ze-popup', minWidth: 320, maxWidth: 340 });
         allMarkers.push({ marker, type: ev.type });
     });
 
@@ -136,6 +151,27 @@
         toggle.addEventListener('click', function () {
             const collapsed = panel.classList.toggle('collapsed');
             toggle.setAttribute('aria-expanded', String(!collapsed));
+        });
+    })();
+
+    // Welcome popup: jednom po sesiji - izbor tipova prije karte
+    (function () {
+        const welcome = document.getElementById('mapWelcome');
+        const goBtn = document.getElementById('welcomeGo');
+        if (!welcome || !goBtn) return;
+        if (!sessionStorage.getItem('ze-welcome-done')) {
+            welcome.hidden = false;
+        }
+        goBtn.addEventListener('click', function () {
+            // prenesi izbor u filtere na karti
+            welcome.querySelectorAll('input[data-type]').forEach(w => {
+                const f = document.querySelector(`.type-filter[value="${w.dataset.type}"]`);
+                if (f) f.checked = w.checked;
+            });
+            refreshMarkers();
+            welcome.classList.add('welcome-out');
+            setTimeout(() => { welcome.hidden = true; }, 300);
+            sessionStorage.setItem('ze-welcome-done', '1');
         });
     })();
 
@@ -209,8 +245,8 @@
 .ze-popup .leaflet-popup-content { margin: 0; width: 100% !important; }
 .ze-popup .leaflet-popup-tip { background: #12121a; border: 1px solid rgba(124,58,237,0.4); }
 .ze-popup a.leaflet-popup-close-button { color: #94a3b8; padding: 6px 8px 0 0; }
-.pin-popup img { width: 100%; height: 130px; object-fit: cover; display: block; }
-.pin-popup-body { padding: 12px 14px 14px; }
+.pin-popup img { width: 100%; height: 150px; object-fit: cover; display: block; }
+.pin-popup-body { padding: 12px 16px 16px; }
 .pin-popup-badge { display: inline-block; padding: 3px 9px; border-radius: 12px; color: #fff; font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
 .pin-popup-venue { font-size: 0.76rem; color: #94a3b8; margin-bottom: 3px; }
 .pin-popup-event { font-size: 1rem; font-weight: 700; color: #f1f5f9; line-height: 1.3; margin-bottom: 6px; }
@@ -221,8 +257,41 @@
 .leaflet-control-zoom a { background: #1a1a2e !important; color: #f1f5f9 !important; border-color: rgba(124,58,237,0.4) !important; }
 .leaflet-control-zoom a:hover { background: #7c3aed !important; }
 
+/* Welcome popup preko karte */
+.map-welcome {
+    position: absolute; inset: 0; z-index: 1200;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5, 5, 10, 0.7); backdrop-filter: blur(6px);
+    transition: opacity 0.3s ease;
+}
+.map-welcome.welcome-out { opacity: 0; pointer-events: none; }
+.welcome-card {
+    background: #12121a; border: 1px solid rgba(124,58,237,0.4);
+    border-radius: 18px; padding: 28px 30px; max-width: 380px; width: calc(100% - 40px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(124,58,237,0.15);
+    text-align: center; animation: ze-welcome-in 0.35s ease;
+}
+@@keyframes ze-welcome-in { from { transform: translateY(16px) scale(0.97); opacity: 0; } to { transform: none; opacity: 1; } }
+.welcome-card h2 { font-size: 1.4rem; margin-bottom: 6px; color: #f1f5f9; }
+.welcome-card p { color: #94a3b8; font-size: 0.88rem; margin-bottom: 18px; }
+.welcome-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.welcome-opt {
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    background: #1a1a2e; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px;
+    color: #cbd5e1; font-size: 0.85rem; cursor: pointer; transition: border-color 0.15s;
+}
+.welcome-opt:hover { border-color: rgba(124,58,237,0.5); }
+.welcome-opt input { accent-color: #7c3aed; }
+.welcome-go {
+    width: 100%; padding: 12px; border: none; border-radius: 10px;
+    background: linear-gradient(90deg, #7c3aed, #06b6d4); color: #fff;
+    font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+}
+.welcome-go:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(124,58,237,0.4); }
+
 @@media (max-width: 600px) {
     .map-filter { top: 10px; left: 10px; padding: 10px; min-width: 140px; }
     .filter-item { font-size: 0.78rem; }
+    .welcome-options { grid-template-columns: 1fr; }
 }
 </style>
