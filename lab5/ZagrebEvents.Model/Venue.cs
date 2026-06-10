@@ -36,6 +36,10 @@ namespace ZagrebEvents.Model
         [MaxLength(500)]
         public string LogoUrl { get; set; } = "";
 
+        // Instagram profil venuea (gumb na detaljima). Prazno = gumb se ne prikazuje.
+        [MaxLength(500)]
+        public string InstagramUrl { get; set; } = "";
+
         // Soft delete
         public DateTime? DeletedAt { get; set; }
 

@@ -54,7 +54,7 @@ namespace ZagrebEvents.Web.Controllers
         public IActionResult Details(int id)
         {
             var venue = _db.Venues
-                .Include(v => v.Events).ThenInclude(e => e.Reviews)
+                .Include(v => v.Events).ThenInclude(e => e.Reviews).ThenInclude(r => r.User)
                 .Include(v => v.Tables)
                 .Include(v => v.PriceList)
                 .FirstOrDefault(v => v.Id == id && v.DeletedAt == null);
@@ -102,7 +102,7 @@ namespace ZagrebEvents.Web.Controllers
             var ok = await TryUpdateModelAsync(venue, "",
                 v => v.Name, v => v.Address, v => v.Latitude, v => v.Longitude,
                 v => v.Capacity, v => v.WorkingHours, v => v.ContactPhone,
-                v => v.Description, v => v.Type, v => v.ImageUrl, v => v.LogoUrl);
+                v => v.Description, v => v.Type, v => v.ImageUrl, v => v.LogoUrl, v => v.InstagramUrl);
 
             if (!ok || !ModelState.IsValid) return View("Edit", venue);
 

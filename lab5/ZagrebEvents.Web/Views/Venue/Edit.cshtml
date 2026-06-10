@@ -80,6 +80,11 @@
         <input asp-for="LogoUrl" type="url" class="ze-input" placeholder="https://..." />
     </div>
 
+    <div class="form-group">
+        <label asp-for="InstagramUrl" class="ze-label">Instagram profil (prazno = bez gumba)</label>
+        <input asp-for="InstagramUrl" type="url" class="ze-input" placeholder="https://www.instagram.com/..." />
+    </div>
+
     <div style="display:flex;gap:12px;margin-top:24px">
         <button type="submit" class="btn-primary-custom" style="flex:1">Spremi</button>
         <a href="/lokacija/@Model.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
