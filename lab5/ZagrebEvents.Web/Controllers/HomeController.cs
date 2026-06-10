@@ -8,6 +8,10 @@ namespace ZagrebEvents.Web.Controllers
     {
         private readonly ZagrebEventsDbContext _db;
 
+        // Welcome popup se prikaze samo pri PRVOM otvaranju karte nakon pokretanja aplikacije.
+        // Restart aplikacije resetira zastavicu (zeljeno ponasanje).
+        private static bool _welcomeShown = false;
+
         public HomeController(ZagrebEventsDbContext db)
         {
             _db = db;
@@ -15,6 +19,9 @@ namespace ZagrebEvents.Web.Controllers
 
         public IActionResult Index()
         {
+            ViewBag.ShowWelcome = !_welcomeShown;
+            _welcomeShown = true;
+
             var venues = _db.Venues
                 .Include(v => v.Events)
                 .ToList();
