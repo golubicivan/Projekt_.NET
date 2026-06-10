@@ -154,12 +154,13 @@
         });
     })();
 
-    // Welcome popup: jednom po sesiji - izbor tipova prije karte
+    // Welcome popup: jednom po POKRETANJU APLIKACIJE (server start), ne svaki put kad se otvori karta
     (function () {
         const welcome = document.getElementById('mapWelcome');
         const goBtn = document.getElementById('welcomeGo');
         if (!welcome || !goBtn) return;
-        if (!sessionStorage.getItem('ze-welcome-done')) {
+        const appStart = '@System.Diagnostics.Process.GetCurrentProcess().StartTime.Ticks';
+        if (localStorage.getItem('ze-welcome-appstart') !== appStart) {
             welcome.hidden = false;
         }
         goBtn.addEventListener('click', function () {
@@ -171,7 +172,7 @@
             refreshMarkers();
             welcome.classList.add('welcome-out');
             setTimeout(() => { welcome.hidden = true; }, 300);
-            sessionStorage.setItem('ze-welcome-done', '1');
+            localStorage.setItem('ze-welcome-appstart', appStart);
         });
     })();
 
@@ -242,7 +243,9 @@
 
 /* Preview popup (dark) */
 .ze-popup .leaflet-popup-content-wrapper { background: #12121a; color: #f1f5f9; border: 1px solid rgba(124,58,237,0.4); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); padding: 0; overflow: hidden; }
-.ze-popup .leaflet-popup-content { margin: 0; width: 100% !important; }
+.ze-popup .leaflet-popup-content { margin: 0; }
+/* Fiksna sirina kartice da se tekst ne lomi okomito */
+.pin-popup { width: 320px; max-width: 86vw; }
 .ze-popup .leaflet-popup-tip { background: #12121a; border: 1px solid rgba(124,58,237,0.4); }
 .ze-popup a.leaflet-popup-close-button { color: #94a3b8; padding: 6px 8px 0 0; }
 .pin-popup img { width: 100%; height: 150px; object-fit: cover; display: block; }
