@@ -45,20 +45,25 @@ namespace ZagrebEvents.Web.Services
                 }
                 else
                 {
-                    // Dev fallback: spremi mail na disk
-                    var dir = Path.Combine(_env.ContentRootPath, "App_Data", "emails");
-                    Directory.CreateDirectory(dir);
-                    var file = Path.Combine(dir, $"{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.html");
-                    var content = $"<!-- To: {to} -->\n<!-- Subject: {subject} -->\n{htmlBody}";
-                    await File.WriteAllTextAsync(file, content);
-                    _logger.LogInformation("SMTP nije konfiguriran - email za {To} spremljen u {File}", to, file);
+                    await WriteToDiskAsync(to, subject, htmlBody, "SMTP nije konfiguriran");
                 }
             }
             catch (Exception ex)
             {
-                // Email ne smije srusiti rezervaciju
+                // Email ne smije srusiti rezervaciju; spremi fallback kopiju na disk
                 _logger.LogError(ex, "Slanje emaila na {To} nije uspjelo", to);
+                try { await WriteToDiskAsync(to, subject, htmlBody, $"SMTP greska: {ex.Message}"); } catch { /* ignore */ }
             }
+        }
+
+        private async Task WriteToDiskAsync(string to, string subject, string htmlBody, string reason)
+        {
+            var dir = Path.Combine(_env.ContentRootPath, "App_Data", "emails");
+            Directory.CreateDirectory(dir);
+            var file = Path.Combine(dir, $"{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.html");
+            var content = $"<!-- To: {to} -->\n<!-- Subject: {subject} -->\n<!-- Razlog datoteke: {reason} -->\n{htmlBody}";
+            await File.WriteAllTextAsync(file, content);
+            _logger.LogInformation("Email za {To} spremljen u {File} ({Reason})", to, file, reason);
         }
 
         // Zajednicki dark-theme template
