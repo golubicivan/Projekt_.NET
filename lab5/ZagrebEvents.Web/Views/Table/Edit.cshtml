@@ -24,6 +24,17 @@
 
     <div class="form-row">
         <div class="form-group">
+            <label asp-for="PosX" class="ze-label">Pozicija na tlocrtu X (%)</label>
+            <input asp-for="PosX" type="number" step="0.1" min="0" max="100" class="ze-input" placeholder="npr. 25" />
+        </div>
+        <div class="form-group">
+            <label asp-for="PosY" class="ze-label">Pozicija na tlocrtu Y (%)</label>
+            <input asp-for="PosY" type="number" step="0.1" min="0" max="100" class="ze-input" placeholder="npr. 60" />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
             <label asp-for="Zone" class="ze-label">Zona</label>
             <select asp-for="Zone" class="ze-input">
                 <option value="0" selected="@(Model.Zone == TableZone.Regular)">Regular</option>

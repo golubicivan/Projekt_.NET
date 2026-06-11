@@ -12,6 +12,11 @@ namespace ZagrebEvents.Model
         public int SeatCount { get; set; }
         public TableZone Zone { get; set; }
 
+        // Pozicija stola na tlocrtu venuea, u postocima (0-100) sirine/visine slike.
+        // null = stol se ne prikazuje kao marker na tlocrtu (samo u popisu).
+        public double? PosX { get; set; }
+        public double? PosY { get; set; }
+
         [ForeignKey(nameof(Venue))]
         public int VenueId { get; set; }
         public virtual Venue? Venue { get; set; }

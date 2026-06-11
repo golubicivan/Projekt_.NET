@@ -98,7 +98,7 @@ namespace ZagrebEvents.Web.Controllers
             var t = _db.Tables.Find(id);
             if (t == null) return NotFound();
             if (!CanManageVenueId(t.VenueId)) return Forbid();
-            var ok = await TryUpdateModelAsync(t, "", x => x.TableNumber, x => x.SeatCount, x => x.Zone, x => x.VenueId);
+            var ok = await TryUpdateModelAsync(t, "", x => x.TableNumber, x => x.SeatCount, x => x.Zone, x => x.VenueId, x => x.PosX, x => x.PosY);
             if (!CanManageVenueId(t.VenueId)) return Forbid();
             if (!ok || !ModelState.IsValid) return View("Edit", t);
             _db.SaveChanges();
