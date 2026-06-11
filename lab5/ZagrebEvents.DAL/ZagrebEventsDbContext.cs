@@ -305,6 +305,23 @@ namespace ZagrebEvents.DAL
             FillOpenAirVip(22, 3);  // Salata ima 2
             FillOpenAirVip(23, 1);  // Ribnjak
 
+            // Pozicije stolova H2O (venue 25) na tlocrtu h2o-tlocrt.svg (800x600 -> postoci)
+            var h2oPos = new (double x, double y)[]
+            {
+                (70,100),(150,100),(70,180),(150,180),      // 1-4 VIP lijevo
+                (650,100),(730,100),(650,180),(730,180),    // 5-8 VIP desno
+                (70,270),(150,270),(70,350),(150,350),(110,430),   // 9-13 lijevi bok
+                (650,270),(730,270),(650,350),(730,350),(690,430), // 14-18 desni bok
+                (250,370),(310,370),(370,370),(430,370),(490,370),(550,370), // 19-24
+                (250,440),(310,440),(370,440),(430,440),(490,440),(550,440)  // 25-30
+            };
+            foreach (var t in genTables.Where(t => t.VenueId == 25))
+            {
+                var p = h2oPos[t.TableNumber - 1];
+                t.PosX = Math.Round(p.x / 8.0, 2);   // 800px sirine -> %
+                t.PosY = Math.Round(p.y / 6.0, 2);   // 600px visine -> %
+            }
+
             modelBuilder.Entity<Table>().HasData(genTables);
         }
     }
