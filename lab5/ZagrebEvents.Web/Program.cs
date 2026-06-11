@@ -9,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
+// Email obavijesti (SMTP iz konfiguracije; bez SMTP-a sprema u App_Data/emails)
+builder.Services.AddScoped<ZagrebEvents.Web.Services.IEmailService, ZagrebEvents.Web.Services.EmailService>();
+
 // EF DbContext (Dependency Injection)
 builder.Services.AddDbContext<ZagrebEventsDbContext>(options =>
     options.UseSqlServer(

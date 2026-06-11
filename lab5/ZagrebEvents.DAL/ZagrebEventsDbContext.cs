@@ -110,8 +110,8 @@ namespace ZagrebEvents.DAL
                 new Table { Id = 7, TableNumber = 3, SeatCount = 4, Zone = TableZone.Regular, VenueId = 2 },
                 new Table { Id = 8, TableNumber = 1, SeatCount = 6, Zone = TableZone.VIP, VenueId = 3 },
                 new Table { Id = 9, TableNumber = 2, SeatCount = 6, Zone = TableZone.VIP, VenueId = 3 },
-                new Table { Id = 10, TableNumber = 3, SeatCount = 4, Zone = TableZone.Regular, VenueId = 3 },
-                new Table { Id = 11, TableNumber = 4, SeatCount = 4, Zone = TableZone.Regular, VenueId = 3 }
+                new Table { Id = 10, TableNumber = 3, SeatCount = 4, Zone = TableZone.VIP, VenueId = 3 },
+                new Table { Id = 11, TableNumber = 4, SeatCount = 4, Zone = TableZone.VIP, VenueId = 3 }
             );
 
             // CJENIK
@@ -186,7 +186,7 @@ namespace ZagrebEvents.DAL
                 new Venue { Id = 23, Name = "Park Ribnjak", Address = "Ribnjak", Latitude = 45.8170, Longitude = 15.9810, Capacity = 1500, WorkingHours = "open-air", ContactPhone = "+38591808080", Description = "Gradski park s ljetnim chill događanjima.", Type = VenueType.OpenAir, ImageUrl = "https://images.unsplash.com/photo-1470770841072-f978cf4d019e?w=800", LogoUrl = "/img/logos/ribnjak.svg" },
                 new Venue { Id = 24, Name = "Eli's Caffe", Address = "Ilica 63", Latitude = 45.8110, Longitude = 15.9650, Capacity = 60, WorkingHours = "07:00 - 20:00", ContactPhone = "+38591909090", Description = "Poznata kavana specijalizirana za vrhunsku kavu.", Type = VenueType.Cafe, ImageUrl = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=800", LogoUrl = "/img/logos/eliscaffe.svg", DeletedAt = new DateTime(2026, 6, 1) },
                 // ===== Dodatni poznati zagrebački klubovi =====
-                new Venue { Id = 25, Name = "Club H2O", Address = "Runjaninova 3", Latitude = 45.8035, Longitude = 15.9715, Capacity = 600, WorkingHours = "23:00 - 06:00", ContactPhone = "+385915100661", Description = "Ekskluzivni noćni klub u centru Zagreba — priča koja drži vodu. 'Pure fun'.", Type = VenueType.Club, ImageUrl = "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800", LogoUrl = "/img/logos/h2o-emblem.jpg", InstagramUrl = "https://www.instagram.com/clubh2ozagreb/" },
+                new Venue { Id = 25, Name = "Club H2O", Address = "Runjaninova 3", Latitude = 45.8035, Longitude = 15.9715, Capacity = 600, WorkingHours = "23:00 - 06:00", ContactPhone = "+385915100661", Description = "Ekskluzivni noćni klub u centru Zagreba — priča koja drži vodu. 'Pure fun'.", Type = VenueType.Club, ImageUrl = "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=800", LogoUrl = "/img/logos/h2o-emblem.jpg", InstagramUrl = "https://www.instagram.com/clubh2ozagreb/", FloorPlanUrl = "/img/floorplans/h2o-tlocrt.svg" },
                 new Venue { Id = 26, Name = "EX Club", Address = "Izidora Kršnjavoga 1", Latitude = 45.8052, Longitude = 15.9668, Capacity = 500, WorkingHours = "23:00 - 05:00", ContactPhone = "+385981112233", Description = "Živahan klub u Donjem gradu s balkan i pop programom.", Type = VenueType.Club, ImageUrl = "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=800", LogoUrl = "/img/logos/ex-emblem.jpg" },
                 new Venue { Id = 27, Name = "Osjećaj", Address = "Kačićeva 23", Latitude = 45.8086, Longitude = 15.9646, Capacity = 350, WorkingHours = "22:00 - 05:00", ContactPhone = "+385986700322", Description = "Klub i caffe bar u starom dijelu grada — slijedi osjećaj.", Type = VenueType.Club, ImageUrl = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800", LogoUrl = "/img/logos/osjecaj-emblem.svg", InstagramUrl = "https://www.instagram.com/slijedi_osjecaj/" },
                 new Venue { Id = 28, Name = "Ritz Club", Address = "Florijana Andrašeca 14", Latitude = 45.8092, Longitude = 15.9562, Capacity = 700, WorkingHours = "23:00 - 06:00", ContactPhone = "+385985525500", Description = "Glamurozni noćni klub — najbolji doživljaj zagrebačkog noćnog života.", Type = VenueType.Club, ImageUrl = "https://images.unsplash.com/photo-1545128485-c400e7702796?w=800", LogoUrl = "/img/logos/ritz-emblem.jpg", InstagramUrl = "https://www.instagram.com/ricklubzg/" },
@@ -259,11 +259,53 @@ namespace ZagrebEvents.DAL
                 new Table { Id = 35, TableNumber = 2, SeatCount = 4, Zone = TableZone.Regular, VenueId = 15 },
                 new Table { Id = 36, TableNumber = 1, SeatCount = 6, Zone = TableZone.VIP, VenueId = 16 },
                 new Table { Id = 37, TableNumber = 2, SeatCount = 4, Zone = TableZone.Regular, VenueId = 16 },
-                new Table { Id = 38, TableNumber = 1, SeatCount = 4, Zone = TableZone.Regular, VenueId = 20 },
+                new Table { Id = 38, TableNumber = 1, SeatCount = 4, Zone = TableZone.VIP, VenueId = 20 },
                 new Table { Id = 39, TableNumber = 2, SeatCount = 6, Zone = TableZone.VIP, VenueId = 20 },
-                new Table { Id = 40, TableNumber = 1, SeatCount = 4, Zone = TableZone.Regular, VenueId = 22 },
-                new Table { Id = 41, TableNumber = 2, SeatCount = 4, Zone = TableZone.Regular, VenueId = 22 }
+                new Table { Id = 40, TableNumber = 1, SeatCount = 4, Zone = TableZone.VIP, VenueId = 22 },
+                new Table { Id = 41, TableNumber = 2, SeatCount = 4, Zone = TableZone.VIP, VenueId = 22 }
             );
+
+            // ====== GENERIRANI STOLOVI ======
+            // Klubovi: popuna do 30 stolova (1-8 VIP po 8 mjesta, 9-18 Regular po 6, 19-30 Regular po 4).
+            // Festivali/open-air: SAMO VIP stolovi (popuna do 10, po 8 mjesta).
+            // Bar (Vintage): popuna do 12 stolova.
+            var genTables = new List<Table>();
+            int tid = 100; // generirani idu od 100 da ne diraju rucni seed (1-41)
+
+            void FillClub(int venueId, int startNumber)
+            {
+                for (int n = startNumber; n <= 30; n++)
+                    genTables.Add(new Table
+                    {
+                        Id = tid++,
+                        TableNumber = n,
+                        SeatCount = n <= 8 ? 8 : (n <= 18 ? 6 : 4),
+                        Zone = n <= 8 ? TableZone.VIP : TableZone.Regular,
+                        VenueId = venueId
+                    });
+            }
+
+            void FillOpenAirVip(int venueId, int startNumber)
+            {
+                for (int n = startNumber; n <= 10; n++)
+                    genTables.Add(new Table { Id = tid++, TableNumber = n, SeatCount = 8, Zone = TableZone.VIP, VenueId = venueId });
+            }
+
+            // klubovi/dvorane koji vec imaju 2 stola -> od broja 3
+            foreach (var vid in new[] { 4, 5, 6, 7, 9, 12, 14 }) FillClub(vid, 3);
+            // klubovi/dvorane bez stolova -> od broja 1
+            foreach (var vid in new[] { 17, 18, 19, 25, 26, 27, 28, 29, 30, 31 }) FillClub(vid, 1);
+            // bar Vintage (id 8, ima 2) -> do 12 stolova
+            for (int n = 3; n <= 12; n++)
+                genTables.Add(new Table { Id = tid++, TableNumber = n, SeatCount = 4, Zone = n <= 4 ? TableZone.VIP : TableZone.Regular, VenueId = 8 });
+            // festivali / open-air: samo VIP
+            FillOpenAirVip(3, 5);   // Bundek vec ima 4
+            FillOpenAirVip(20, 3);  // Jarun ima 2
+            FillOpenAirVip(21, 1);  // Maksimir
+            FillOpenAirVip(22, 3);  // Salata ima 2
+            FillOpenAirVip(23, 1);  // Ribnjak
+
+            modelBuilder.Entity<Table>().HasData(genTables);
         }
     }
 }
