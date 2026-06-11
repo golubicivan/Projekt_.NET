@@ -11,11 +11,13 @@ namespace ZagrebEvents.Web.Controllers
     {
         private readonly ZagrebEventsDbContext _db;
         private readonly IWebHostEnvironment _env;
+        private readonly IEmailService _email;
 
-        public EventController(ZagrebEventsDbContext db, IWebHostEnvironment env)
+        public EventController(ZagrebEventsDbContext db, IWebHostEnvironment env, IEmailService email)
         {
             _db = db;
             _env = env;
+            _email = email;
         }
 
         // INDEX — lista evenata (admin vidi sve, ostali samo nadolazeće)
@@ -206,12 +208,26 @@ namespace ZagrebEvents.Web.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public IActionResult Reserve(int eventId, int tableId, int guests, string? note)
+        public async Task<IActionResult> Reserve(int eventId, int tableId, int guests, string? note)
         {
-            var ev = _db.Events.FirstOrDefault(e => e.Id == eventId && e.DeletedAt == null);
+            var ev = _db.Events.Include(e => e.Venue).FirstOrDefault(e => e.Id == eventId && e.DeletedAt == null);
             if (ev == null) return NotFound();
 
+            // Stol mora pripadati venueu eventa
+            var table = _db.Tables.FirstOrDefault(t => t.Id == tableId && t.VenueId == ev.VenueId);
+            if (table == null) return NotFound();
+
+            // ZASTITA: stol ne smije vec biti rezerviran za ovaj event (osim otkazanih)
+            bool taken = _db.Reservations.Any(r =>
+                r.EventId == eventId && r.TableId == tableId && r.Status != ReservationStatus.Cancelled);
+            if (taken)
+            {
+                TempData["ReservationError"] = $"Stol {table.TableNumber} je u međuvremenu zauzet. Odaberi drugi stol.";
+                return RedirectToAction("Details", new { id = eventId });
+            }
+
             var userId = User.GetDomainUserId() ?? 0;
+            var user = _db.Users.FirstOrDefault(u => u.Id == userId);
 
             var reservation = new Reservation
             {
@@ -228,7 +244,24 @@ namespace ZagrebEvents.Web.Controllers
             _db.Reservations.Add(reservation);
             _db.SaveChanges();
 
-            TempData["ReservationSuccess"] = $"Rezervacija za {guests} gostiju uspješno poslana! Čekajte potvrdu.";
+            // Email potvrda da je rezervacija zaprimljena
+            if (user != null && !string.IsNullOrWhiteSpace(user.Email))
+            {
+                var body = Services.EmailService.Wrap("Rezervacija zaprimljena ✅", $@"
+                    <p>Bok {user.FirstName},</p>
+                    <p>tvoja rezervacija je <b>zaprimljena</b> i čeka potvrdu vlasnika lokacije:</p>
+                    <ul>
+                      <li><b>Event:</b> {ev.Name}</li>
+                      <li><b>Lokacija:</b> {ev.Venue?.Name}</li>
+                      <li><b>Datum:</b> {ev.StartTime:dd.MM.yyyy HH:mm}</li>
+                      <li><b>Stol:</b> {table.TableNumber} ({(table.Zone == TableZone.VIP ? "VIP" : "Regular")})</li>
+                      <li><b>Gostiju:</b> {guests}</li>
+                    </ul>
+                    <p>Javit ćemo ti čim vlasnik potvrdi ili odbije rezervaciju.</p>");
+                await _email.SendAsync(user.Email, $"GdjeCemo — rezervacija zaprimljena ({ev.Name})", body);
+            }
+
+            TempData["ReservationSuccess"] = $"Rezervacija za {guests} gostiju uspješno poslana! Potvrda je poslana na tvoj email.";
             return RedirectToAction("Details", new { id = eventId });
         }
 

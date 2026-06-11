@@ -10,10 +10,12 @@ namespace ZagrebEvents.Web.Controllers
     public class ReservationController : Controller
     {
         private readonly ZagrebEventsDbContext _db;
+        private readonly IEmailService _email;
 
-        public ReservationController(ZagrebEventsDbContext db)
+        public ReservationController(ZagrebEventsDbContext db, IEmailService email)
         {
             _db = db;
+            _email = email;
         }
 
         // INDEX — samo Admin (rezervacije se gledaju po eventu/lokaciji)
@@ -153,12 +155,17 @@ namespace ZagrebEvents.Web.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin,Owner")]
         [ValidateAntiForgeryToken]
-        public IActionResult SetStatus(int id, ReservationStatus status, string? returnUrl = null)
+        public async Task<IActionResult> SetStatus(int id, ReservationStatus status, string? returnUrl = null)
         {
-            var reservation = _db.Reservations.Find(id);
+            var reservation = _db.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Table)
+                .Include(r => r.Event).ThenInclude(e => e!.Venue)
+                .FirstOrDefault(r => r.Id == id);
             if (reservation == null) return NotFound();
             if (!CanManageReservation(id)) return Forbid();
 
+            var oldStatus = reservation.Status;
             reservation.Status = status;
             _db.SaveChanges();
 
@@ -170,6 +177,27 @@ namespace ZagrebEvents.Web.Controllers
                 _ => "ažurirana"
             };
             TempData["Success"] = $"Rezervacija #{id} {label}.";
+
+            // Email gostu kad owner/admin POTVRDI ili ODBIJE rezervaciju
+            if (oldStatus != status
+                && (status == ReservationStatus.Confirmed || status == ReservationStatus.Cancelled)
+                && reservation.User != null && !string.IsNullOrWhiteSpace(reservation.User.Email))
+            {
+                bool ok = status == ReservationStatus.Confirmed;
+                var title = ok ? "Rezervacija potvrđena 🎉" : "Rezervacija odbijena ❌";
+                var body = Services.EmailService.Wrap(title, $@"
+                    <p>Bok {reservation.User.FirstName},</p>
+                    <p>tvoja rezervacija je <b style='color:{(ok ? "#10b981" : "#ef4444")}'>{(ok ? "POTVRĐENA" : "ODBIJENA")}</b>:</p>
+                    <ul>
+                      <li><b>Event:</b> {reservation.Event?.Name}</li>
+                      <li><b>Lokacija:</b> {reservation.Event?.Venue?.Name}</li>
+                      <li><b>Datum:</b> {reservation.Event?.StartTime:dd.MM.yyyy HH:mm}</li>
+                      <li><b>Stol:</b> {reservation.Table?.TableNumber}</li>
+                      <li><b>Gostiju:</b> {reservation.NumberOfGuests}</li>
+                    </ul>
+                    {(ok ? "<p>Vidimo se! 🥳</p>" : "<p>Slobodno pokušaj rezervirati drugi stol ili drugi event.</p>")}");
+                await _email.SendAsync(reservation.User.Email, $"GdjeCemo — {title}", body);
+            }
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 return Redirect(returnUrl);

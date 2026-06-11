@@ -40,6 +40,11 @@ namespace ZagrebEvents.Model
         [MaxLength(500)]
         public string InstagramUrl { get; set; } = "";
 
+        // Tlocrt venuea s ucrtanim brojevima stolova (owner/admin ga postavlja kao i sliku).
+        // Prikazuje se u modalu zauzetosti stolova na detaljima eventa.
+        [MaxLength(500)]
+        public string FloorPlanUrl { get; set; } = "";
+
         // Soft delete
         public DateTime? DeletedAt { get; set; }
 

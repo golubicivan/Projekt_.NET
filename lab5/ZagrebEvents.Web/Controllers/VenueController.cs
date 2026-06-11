@@ -102,7 +102,7 @@ namespace ZagrebEvents.Web.Controllers
             var ok = await TryUpdateModelAsync(venue, "",
                 v => v.Name, v => v.Address, v => v.Latitude, v => v.Longitude,
                 v => v.Capacity, v => v.WorkingHours, v => v.ContactPhone,
-                v => v.Description, v => v.Type, v => v.ImageUrl, v => v.LogoUrl, v => v.InstagramUrl);
+                v => v.Description, v => v.Type, v => v.ImageUrl, v => v.LogoUrl, v => v.InstagramUrl, v => v.FloorPlanUrl);
 
             if (!ok || !ModelState.IsValid) return View("Edit", venue);
 

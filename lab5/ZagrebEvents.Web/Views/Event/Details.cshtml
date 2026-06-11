@@ -19,6 +19,10 @@
 {
     <div class="ze-alert-success">✓ @TempData["ReservationSuccess"]</div>
 }
+@if (TempData["ReservationError"] != null)
+{
+    <div class="ze-alert-danger">✗ @TempData["ReservationError"]</div>
+}
 
 <div class="event-detail">
     <!-- Hero -->
@@ -73,24 +77,15 @@
             @if (Model.IsUpcoming)
             {
                 <div class="detail-section">
-                    <h2>Rezervacija stola</h2>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <h2 style="margin:0">Rezervacija stola</h2>
+                        <button type="button" id="floorplanBtn" class="floorplan-info-btn" title="Tlocrt i zauzetost stolova">ℹ️ Tlocrt &amp; zauzetost</button>
+                    </div>
+                    <p class="text-muted-ze" style="font-size:0.82rem;margin:6px 0 14px">
+                        Slobodno: <b style="color:#10b981">@freeTables.Count</b> / @Model.Venue.Tables.Count stolova
+                    </p>
                     @if (freeTables.Any())
                     {
-                        <div class="tables-grid">
-                            @foreach (var table in Model.Venue.Tables)
-                            {
-                                bool isFree = freeTables.Any(ft => ft.Id == table.Id);
-                                <div class="table-card @(!isFree ? "table-taken" : "")">
-                                    <div class="table-number">Stol @table.TableNumber</div>
-                                    <div class="table-zone @(table.Zone == TableZone.VIP ? "zone-vip" : "zone-regular")">
-                                        @(table.Zone == TableZone.VIP ? "VIP" : "Regular")
-                                    </div>
-                                    <div class="table-seats">👥 @table.SeatCount mjesta</div>
-                                    <div class="table-status">@(isFree ? "✓ Slobodan" : "✗ Zauzet")</div>
-                                </div>
-                            }
-                        </div>
-
                         <form action="/Event/Reserve" method="post" class="ze-form reservation-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="eventId" value="@Model.Id" />
@@ -99,7 +94,7 @@
                                     <label class="ze-label">Stol</label>
                                     <select name="tableId" class="ze-input" required>
                                         <option value="">Odaberi stol...</option>
-                                        @foreach (var t in freeTables)
+                                        @foreach (var t in freeTables.OrderBy(t => t.TableNumber))
                                         {
                                             <option value="@t.Id">Stol @t.TableNumber — @(t.Zone == TableZone.VIP ? "VIP" : "Regular"), @t.SeatCount mjesta</option>
                                         }
@@ -286,7 +281,95 @@
     </div>
 </div>
 
+@* ============= MODAL: TLOCRT + ZAUZETOST STOLOVA ============= *@
+<div class="floorplan-modal" id="floorplanModal" hidden>
+    <div class="floorplan-card">
+        <div class="floorplan-head">
+            <h3 style="margin:0">@Model.Venue.Name — tlocrt i zauzetost</h3>
+            <button type="button" id="floorplanClose" class="floorplan-close" aria-label="Zatvori">✕</button>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Venue.FloorPlanUrl))
+        {
+            <img src="@Model.Venue.FloorPlanUrl" alt="Tlocrt @Model.Venue.Name" class="floorplan-img" />
+        }
+        else
+        {
+            <div class="floorplan-missing">
+                📐 Vlasnik još nije postavio tlocrt ove lokacije.
+                @if (User.CanManageVenue(Model.Venue.OwnerAppUserId))
+                {
+                    <a href="/Venue/Edit/@Model.Venue.Id" style="color:#a78bfa">Dodaj tlocrt →</a>
+                }
+            </div>
+        }
+        <div class="floorplan-legend">
+            <span><i class="dot dot-free"></i> Slobodan</span>
+            <span><i class="dot dot-taken"></i> Zauzet</span>
+            <span><i class="dot dot-vip"></i> VIP zona</span>
+        </div>
+        <div class="floorplan-tables">
+            @foreach (var table in Model.Venue.Tables.OrderBy(t => t.TableNumber))
+            {
+                bool isFree = freeTables.Any(ft => ft.Id == table.Id);
+                <span class="fp-chip @(isFree ? "fp-free" : "fp-taken")" title="@table.SeatCount mjesta">
+                    @(table.Zone == TableZone.VIP ? "★" : "")@table.TableNumber
+                </span>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var btn = document.getElementById('floorplanBtn');
+        var modal = document.getElementById('floorplanModal');
+        var close = document.getElementById('floorplanClose');
+        if (!btn || !modal) return;
+        btn.addEventListener('click', function () { modal.hidden = false; });
+        close.addEventListener('click', function () { modal.hidden = true; });
+        modal.addEventListener('click', function (e) { if (e.target === modal) modal.hidden = true; });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') modal.hidden = true; });
+    })();
+</script>
+
 <style>
+/* Tlocrt: info gumb + modal */
+.floorplan-info-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600;
+    background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.45); color: #22d3ee;
+    cursor: pointer; transition: background 0.15s;
+}
+.floorplan-info-btn:hover { background: rgba(6,182,212,0.25); }
+.floorplan-modal {
+    position: fixed; inset: 0; z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(5,5,10,0.78); backdrop-filter: blur(5px); padding: 20px;
+}
+.floorplan-card {
+    background: #12121a; border: 1px solid rgba(124,58,237,0.4); border-radius: 16px;
+    padding: 20px; max-width: 860px; width: 100%; max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+}
+.floorplan-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.floorplan-head h3 { color: #f1f5f9; font-size: 1.05rem; }
+.floorplan-close { background: none; border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; }
+.floorplan-close:hover { border-color: #ef4444; color: #ef4444; }
+.floorplan-img { width: 100%; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); display: block; }
+.floorplan-missing { padding: 28px; text-align: center; color: #94a3b8; background: #0d0d15; border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; }
+.floorplan-legend { display: flex; gap: 18px; margin: 12px 0 8px; color: #94a3b8; font-size: 0.78rem; }
+.floorplan-legend .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; }
+.dot-free { background: #10b981; }
+.dot-taken { background: #ef4444; }
+.dot-vip { background: transparent; border: 2px solid #facc15; width: 9px !important; height: 9px !important; }
+.floorplan-tables { display: flex; flex-wrap: wrap; gap: 7px; }
+.fp-chip {
+    min-width: 38px; text-align: center; padding: 6px 8px; border-radius: 8px;
+    font-size: 0.82rem; font-weight: 700;
+}
+.fp-free { background: rgba(16,185,129,0.14); color: #34d399; border: 1px solid rgba(16,185,129,0.45); }
+.fp-taken { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.4); text-decoration: line-through; opacity: 0.75; }
+
 .event-detail-hero {
     position: relative;
     height: 420px;
