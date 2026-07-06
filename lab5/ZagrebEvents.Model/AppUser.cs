@@ -13,10 +13,13 @@ namespace ZagrebEvents.Model
         [RegularExpression("^[0-9]*$", ErrorMessage = "OIB smije sadržavati samo brojeve.")]
         public string OIB { get; set; } = "";
 
-        [Required]
-        [StringLength(13, MinimumLength = 13, ErrorMessage = "JMBG mora imati točno 13 znamenki.")]
-        [RegularExpression("^[0-9]*$", ErrorMessage = "JMBG smije sadržavati samo brojeve.")]
-        public string JMBG { get; set; } = "";
+        // JMBG ostaje u modelu (prosireni AppUser), ali se pri registraciji vise ne trazi.
+        [StringLength(13)]
+        public string? JMBG { get; set; }
+
+        // Putanja do slike osobnog dokumenta (potvrda dobi i identiteta) prilozene pri registraciji.
+        [StringLength(500)]
+        public string? IdentityDocumentPath { get; set; }
 
         // Veza na domenski profil je na User.AppUserId strani (jedan smjer).
     }

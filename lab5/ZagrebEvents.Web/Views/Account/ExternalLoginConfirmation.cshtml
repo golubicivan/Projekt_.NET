@@ -13,7 +13,7 @@
     <div class="auth-card">
         <div class="auth-header">
             <h1>Dovrši registraciju</h1>
-            <p class="text-muted-ze">Prijavljen si preko @provider. Unesi još OIB i JMBG.</p>
+            <p class="text-muted-ze">Prijavljen si preko @provider. Unesi OIB i priloži sliku dokumenta.</p>
         </div>
 
         @if (!ViewData.ModelState.IsValid)
@@ -26,7 +26,7 @@
             </div>
         }
 
-        <form method="post" action="/Account/ExternalLoginConfirmation" class="ze-form">
+        <form method="post" action="/Account/ExternalLoginConfirmation" class="ze-form" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             @if (!string.IsNullOrEmpty(returnUrl))
             {
@@ -49,15 +49,15 @@
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="ze-label">OIB (11 znamenki)</label>
-                    <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" required />
-                </div>
-                <div class="form-group">
-                    <label class="ze-label">JMBG (13 znamenki)</label>
-                    <input type="text" name="jmbg" class="ze-input" pattern="[0-9]{13}" maxlength="13" required />
-                </div>
+            <div class="form-group">
+                <label class="ze-label">OIB (11 znamenki)</label>
+                <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" required />
+            </div>
+
+            <div class="form-group">
+                <label class="ze-label">Slika osobnog dokumenta *</label>
+                <input type="file" name="document" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Potvrda dobi i identiteta (JPG/PNG, max 5 MB).</small>
             </div>
 
             <button type="submit" class="btn-primary-custom" style="width:100%;margin-top:8px">Dovrši registraciju</button>
@@ -70,4 +70,6 @@
 .auth-card { background: #12121a; border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 32px; }
 .auth-header { text-align: center; margin-bottom: 24px; }
 .auth-header h1 { font-size: 1.8rem; font-weight: 700; color: #f1f5f9; margin: 0 0 6px; }
+.ze-file { padding: 10px; cursor: pointer; }
+.ze-file::file-selector-button { background: rgba(124,58,237,0.2); color: #a78bfa; border: none; padding: 6px 12px; border-radius: 6px; margin-right: 10px; cursor: pointer; font-weight: 600; }
 </style>
