@@ -88,6 +88,12 @@ namespace ZagrebEvents.Web.Controllers
                         .Where(v => v.OwnerAppUserId == user.AppUserId && v.DeletedAt == null)
                         .Select(v => (int?)v.Id)
                         .FirstOrDefault();
+
+                    // Slika osobnog dokumenta (za provjeru dobi/identiteta) — samo admin
+                    ViewBag.IdentityDocument = _userManager.Users
+                        .Where(a => a.Id == user.AppUserId)
+                        .Select(a => a.IdentityDocumentPath)
+                        .FirstOrDefault();
                 }
             }
 

@@ -19,7 +19,7 @@
             </div>
         }
 
-        <form method="post" action="/registracija" class="ze-form">
+        <form method="post" action="/registracija" class="ze-form" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
 
             <div class="form-row">
@@ -38,15 +38,15 @@
                 <input type="email" name="email" class="ze-input" placeholder="ime.prezime@email.com" required />
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="ze-label">OIB (11 znamenki)</label>
-                    <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" placeholder="12345678901" required />
-                </div>
-                <div class="form-group">
-                    <label class="ze-label">JMBG (13 znamenki)</label>
-                    <input type="text" name="jmbg" class="ze-input" pattern="[0-9]{13}" maxlength="13" placeholder="1505003331234" required />
-                </div>
+            <div class="form-group">
+                <label class="ze-label">OIB (11 znamenki)</label>
+                <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" placeholder="12345678901" required />
+            </div>
+
+            <div class="form-group">
+                <label class="ze-label">Slika osobnog dokumenta *</label>
+                <input type="file" name="document" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Fotografija osobne/putovnice/vozačke — potvrda dobi i identiteta (JPG/PNG, max 5 MB).</small>
             </div>
 
             <div class="form-row">
@@ -90,4 +90,6 @@
 .auth-footer { margin-top: 22px; text-align: center; font-size: 0.9rem; }
 .auth-footer a { text-decoration: none; font-weight: 600; }
 .auth-footer a:hover { text-decoration: underline; }
+.ze-file { padding: 10px; cursor: pointer; }
+.ze-file::file-selector-button { background: rgba(124,58,237,0.2); color: #a78bfa; border: none; padding: 6px 12px; border-radius: 6px; margin-right: 10px; cursor: pointer; font-weight: 600; }
 </style>

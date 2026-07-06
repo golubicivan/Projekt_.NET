@@ -12,15 +12,49 @@ namespace ZagrebEvents.Web.Controllers
         private readonly ZagrebEventsDbContext _db;
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
+        private readonly IWebHostEnvironment _env;
 
         public AccountController(
             ZagrebEventsDbContext db,
             UserManager<AppUser> userManager,
-            SignInManager<AppUser> signInManager)
+            SignInManager<AppUser> signInManager,
+            IWebHostEnvironment env)
         {
             _db = db;
             _userManager = userManager;
             _signInManager = signInManager;
+            _env = env;
+        }
+
+        // Sprema priloženu sliku dokumenta na disk i vraća relativnu putanju (ili null uz grešku u ModelState).
+        private async Task<string?> SaveIdentityDocumentAsync(IFormFile? document)
+        {
+            if (document == null || document.Length == 0)
+            {
+                ModelState.AddModelError("document", "Priložite sliku osobnog dokumenta (potvrda dobi i identiteta).");
+                return null;
+            }
+            if (document.Length > 5 * 1024 * 1024)
+            {
+                ModelState.AddModelError("document", "Slika je prevelika (max 5 MB).");
+                return null;
+            }
+            var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp", ".heic" };
+            var ext = Path.GetExtension(document.FileName).ToLowerInvariant();
+            if (!allowed.Contains(ext))
+            {
+                ModelState.AddModelError("document", "Dozvoljene su samo slike (JPG, PNG, WEBP).");
+                return null;
+            }
+
+            var dir = Path.Combine(_env.WebRootPath, "uploads", "documents");
+            Directory.CreateDirectory(dir);
+            var storedName = Guid.NewGuid().ToString("N") + ext;
+            var fullPath = Path.Combine(dir, storedName);
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+                await document.CopyToAsync(stream);
+
+            return $"/uploads/documents/{storedName}";
         }
 
         // ===================== LOGIN =====================
@@ -77,7 +111,7 @@ namespace ZagrebEvents.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(
             string firstName, string lastName, string email, string password, string passwordConfirm,
-            DateTime dateOfBirth, string? phoneNumber, string oib, string jmbg)
+            DateTime dateOfBirth, string? phoneNumber, string oib, IFormFile? document)
         {
             // Server-side validacija
             if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) ||
@@ -90,11 +124,11 @@ namespace ZagrebEvents.Web.Controllers
             if (string.IsNullOrWhiteSpace(oib) || oib.Length != 11 || !oib.All(char.IsDigit))
                 ModelState.AddModelError(nameof(oib), "OIB mora imati točno 11 znamenki.");
 
-            if (string.IsNullOrWhiteSpace(jmbg) || jmbg.Length != 13 || !jmbg.All(char.IsDigit))
-                ModelState.AddModelError(nameof(jmbg), "JMBG mora imati točno 13 znamenki.");
-
             if (await _userManager.FindByEmailAsync(email) != null)
                 ModelState.AddModelError("", "Korisnik s tim emailom već postoji.");
+
+            // Slika dokumenta (potvrda dobi i identiteta) - obavezno
+            var documentPath = await SaveIdentityDocumentAsync(document);
 
             if (!ModelState.IsValid)
                 return View();
@@ -106,7 +140,7 @@ namespace ZagrebEvents.Web.Controllers
                 Email = email,
                 EmailConfirmed = true,
                 OIB = oib,
-                JMBG = jmbg
+                IdentityDocumentPath = documentPath
             };
             var result = await _userManager.CreateAsync(appUser, password);
             if (!result.Succeeded)
@@ -201,7 +235,7 @@ namespace ZagrebEvents.Web.Controllers
         [Route("[controller]/[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExternalLoginConfirmation(
-            string firstName, string lastName, string oib, string jmbg, string? returnUrl = null)
+            string firstName, string lastName, string oib, IFormFile? document, string? returnUrl = null)
         {
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
@@ -211,8 +245,8 @@ namespace ZagrebEvents.Web.Controllers
 
             if (string.IsNullOrWhiteSpace(oib) || oib.Length != 11 || !oib.All(char.IsDigit))
                 ModelState.AddModelError(nameof(oib), "OIB mora imati točno 11 znamenki.");
-            if (string.IsNullOrWhiteSpace(jmbg) || jmbg.Length != 13 || !jmbg.All(char.IsDigit))
-                ModelState.AddModelError(nameof(jmbg), "JMBG mora imati točno 13 znamenki.");
+
+            var documentPath = await SaveIdentityDocumentAsync(document);
 
             if (!ModelState.IsValid)
             {
@@ -228,7 +262,7 @@ namespace ZagrebEvents.Web.Controllers
                 Email = email,
                 EmailConfirmed = true,
                 OIB = oib,
-                JMBG = jmbg
+                IdentityDocumentPath = documentPath
             };
             var createResult = await _userManager.CreateAsync(appUser);
             if (createResult.Succeeded)

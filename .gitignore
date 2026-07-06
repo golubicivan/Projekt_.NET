@@ -31,3 +31,7 @@ packages/
 ## OS
 .DS_Store
 Thumbs.db
+
+# Uploadani osobni dokumenti (privatnost) i email fallback
+lab5/ZagrebEvents.Web/wwwroot/uploads/documents/
+lab5/ZagrebEvents.Web/App_Data/emails/
