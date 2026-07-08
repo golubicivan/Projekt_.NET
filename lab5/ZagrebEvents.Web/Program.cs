@@ -22,7 +22,14 @@ builder.Host.UseSerilog((context, config) => config
         retainedFileCountLimit: 14,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    // Fix: decimalni brojevi iz formi (tocka I zarez rade neovisno o hr kulturi)
+    options.ModelBinderProviders.Insert(0, new ZagrebEvents.Web.Services.InvariantNumberModelBinderProvider());
+    // Fix: prazan string ostaje "" (ne null) -> opcionalna string polja ne padaju na implicitnom Required
+    options.ModelMetadataDetailsProviders.Add(new ZagrebEvents.Web.Services.EmptyStringMetadataProvider());
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+});
 
 // Email obavijesti (SMTP iz konfiguracije; bez SMTP-a sprema u App_Data/emails)
 builder.Services.AddScoped<ZagrebEvents.Web.Services.IEmailService, ZagrebEvents.Web.Services.EmailService>();
