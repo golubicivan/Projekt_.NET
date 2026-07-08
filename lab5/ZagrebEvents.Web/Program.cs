@@ -34,6 +34,9 @@ builder.Services.AddControllersWithViews(options =>
 // Email obavijesti (SMTP iz konfiguracije; bez SMTP-a sprema u App_Data/emails)
 builder.Services.AddScoped<ZagrebEvents.Web.Services.IEmailService, ZagrebEvents.Web.Services.EmailService>();
 
+// AI unos podataka (Claude API; kljuc u user-secrets Anthropic:ApiKey)
+builder.Services.AddSingleton<ZagrebEvents.Web.Services.IAiEventService, ZagrebEvents.Web.Services.AiEventService>();
+
 // EF DbContext (Dependency Injection)
 builder.Services.AddDbContext<ZagrebEventsDbContext>(options =>
     options.UseSqlServer(
