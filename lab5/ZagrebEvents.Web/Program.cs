@@ -2,10 +2,25 @@ using System.Globalization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using ZagrebEvents.DAL;
 using ZagrebEvents.Model;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ============= Serilog logging (konzola + rolling file) =============
+// Datoteke: logs/gdjecemo-YYYYMMDD.log, zadrzava zadnjih 14 dana.
+builder.Host.UseSerilog((context, config) => config
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: Path.Combine(context.HostingEnvironment.ContentRootPath, "logs", "gdjecemo-.log"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"));
 
 builder.Services.AddControllersWithViews();
 
@@ -119,6 +134,9 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedCultures = supportedCultures,
     SupportedUICultures = supportedCultures
 });
+
+// HTTP request logging (metoda, ruta, status, trajanje) u Serilog sinkove
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

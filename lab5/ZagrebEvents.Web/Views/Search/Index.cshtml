@@ -1,0 +1,80 @@
+@model ZagrebEvents.Web.Models.GlobalSearchViewModel
+@{
+    ViewData["Title"] = "Pretraga";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb"><a href="/">Karta</a> › <span>Pretraga</span></nav>
+}
+
+<div class="ze-page-header">
+    <h1>🔎 Pretraga</h1>
+    <p class="text-muted-ze">Pretraži stranice, lokacije, evente@(User.IsInRole("Admin") ? " i korisnike" : "")</p>
+</div>
+
+<form method="get" action="/trazi" class="gs-form">
+    <input type="text" name="q" value="@Model.Query" class="ze-input gs-input"
+           placeholder="Upiši pojam... (npr. H2O, techno, rezervacije)" autofocus autocomplete="off" />
+    <button type="submit" class="btn-primary-custom">Traži</button>
+</form>
+
+@if (!string.IsNullOrWhiteSpace(Model.Query))
+{
+    @if (Model.TotalCount == 0)
+    {
+        <div class="ze-alert-danger" style="margin-top:20px">Nema rezultata za "<b>@Model.Query</b>". Pokušaj drugi pojam.</div>
+    }
+    else
+    {
+        <p class="text-muted-ze" style="margin-top:14px">@Model.TotalCount rezultata za "<b style="color:#a78bfa">@Model.Query</b>"</p>
+
+        @foreach (var group in new[] {
+            ("Stranice i izbornik", Model.Pages),
+            ("Lokacije", Model.Venues),
+            ("Eventi", Model.Events),
+            ("Korisnici", Model.Users) })
+        {
+            if (group.Item2.Any())
+            {
+                <div class="gs-group">
+                    <h2 class="gs-group-title">@group.Item1 (@group.Item2.Count)</h2>
+                    <div class="gs-hits">
+                        @foreach (var hit in group.Item2)
+                        {
+                            <a href="@hit.Url" class="gs-hit">
+                                <span class="gs-hit-icon">@hit.Icon</span>
+                                <span class="gs-hit-main">
+                                    <span class="gs-hit-title">@hit.Title</span>
+                                    @if (!string.IsNullOrEmpty(hit.Subtitle))
+                                    {
+                                        <span class="gs-hit-sub">@hit.Subtitle</span>
+                                    }
+                                </span>
+                                <span class="gs-hit-kind">@hit.Kind</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    }
+}
+
+<style>
+.gs-form { display: flex; gap: 10px; max-width: 640px; }
+.gs-input { flex: 1; font-size: 1rem; }
+.gs-group { margin-top: 22px; }
+.gs-group-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 10px; }
+.gs-hits { display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
+.gs-hit {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    background: #12121a; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px;
+    text-decoration: none; color: inherit; transition: border-color 0.15s, transform 0.15s;
+}
+.gs-hit:hover { border-color: rgba(124,58,237,0.5); transform: translateX(4px); }
+.gs-hit-icon { font-size: 1.3rem; width: 32px; text-align: center; }
+.gs-hit-main { flex: 1; display: flex; flex-direction: column; }
+.gs-hit-title { font-weight: 600; color: #f1f5f9; }
+.gs-hit-sub { font-size: 0.78rem; color: #94a3b8; }
+.gs-hit-kind { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #7c3aed; background: rgba(124,58,237,0.12); padding: 3px 9px; border-radius: 10px; }
+</style>

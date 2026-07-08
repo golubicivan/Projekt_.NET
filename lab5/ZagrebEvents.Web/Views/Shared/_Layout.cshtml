@@ -42,6 +42,12 @@
             <ul class="sidebar-menu">
                 @* Javno dostupne stranice — svi vide *@
                 <li class="sidebar-menu-item">
+                    <a href="/trazi" class="sidebar-link">
+                        <span class="sidebar-icon">&#128270;</span>
+                        Pretraga
+                    </a>
+                </li>
+                <li class="sidebar-menu-item">
                     <a href="/eventi" class="sidebar-link">
                         <span class="sidebar-icon">&#128197;</span>
                         Eventi
@@ -164,6 +170,10 @@
             <a href="/" class="ze-navbar-logo" aria-label="GdjeCemo - Početna">
                 <span class="logo-zg">Gdje</span>Cemo
             </a>
+            <form method="get" action="/trazi" class="ze-global-search" role="search">
+                <span class="gs-nav-icon">🔎</span>
+                <input type="search" name="q" placeholder="Pretraži sve..." class="gs-nav-input" autocomplete="off" aria-label="Globalna pretraga" />
+            </form>
             <button class="ze-hamburger" id="hamburgerBtn" onclick="openSidebar()" aria-label="Otvori izbornik" aria-expanded="false" aria-controls="sidebar">
                 &#9776;
             </button>
