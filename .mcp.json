@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gdjecemo": {
+      "command": "dotnet",
+      "args": ["run", "--project", "lab5/ZagrebEvents.McpServer"],
+      "env": {
+        "ZE_BASEURL": "http://localhost:5053"
+      }
+    }
+  }
+}
