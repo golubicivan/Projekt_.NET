@@ -1,0 +1,106 @@
+@model ZagrebEvents.Web.Controllers.AiUnosViewModel
+@{
+    ViewData["Title"] = "AI unos";
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <span>AI unos</span>
+</nav>
+}
+
+<div class="ze-page-header">
+    <h1>🤖 AI unos podataka</h1>
+    <p class="text-muted-ze">Opiši event običnim jezikom — Claude izvuče podatke i kreira ga u bazi</p>
+</div>
+
+<div style="max-width:800px">
+
+    @if (Model.KeyMissing)
+    {
+        <div class="ze-alert-danger" style="margin-bottom:16px">
+            ⚠️ Anthropic API ključ nije postavljen. Postavi ga naredbom:
+            <code>dotnet user-secrets set "Anthropic:ApiKey" "sk-ant-..."</code>
+        </div>
+    }
+
+    @if (Model.Created != null)
+    {
+        <div class="ai-result-card">
+            <div class="ai-result-head">✅ Event kreiran!</div>
+            <div class="ai-result-body">
+                <div class="ai-result-name">@Model.Created.TypeIcon @Model.Created.Name</div>
+                <div class="ai-result-grid">
+                    <div><span class="ai-k">Lokacija</span><span class="ai-v">📍 @(Model.Created.Venue?.Name ?? "—")</span></div>
+                    <div><span class="ai-k">Početak</span><span class="ai-v">@Model.Created.StartTime.ToString("dd.MM.yyyy. HH:mm")</span></div>
+                    <div><span class="ai-k">Kraj</span><span class="ai-v">@Model.Created.EndTime.ToString("dd.MM.yyyy. HH:mm")</span></div>
+                    <div><span class="ai-k">Tip</span><span class="ai-v">@Model.Created.TypeLabel</span></div>
+                    <div><span class="ai-k">Ulaz</span><span class="ai-v">@(Model.Created.EntryPrice > 0 ? Model.Created.EntryPrice.ToString("0.##") + " €" : "Besplatno")</span></div>
+                    <div><span class="ai-k">Dob</span><span class="ai-v">@(Model.Created.AgeLimit > 0 ? Model.Created.AgeLimit + "+" : "Bez granice")</span></div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.Created.Description))
+                {
+                    <p class="ai-result-desc">@Model.Created.Description</p>
+                }
+                <div class="ai-result-actions">
+                    <a href="/event/@Model.Created.Id" class="ze-btn-primary">Otvori event →</a>
+                    <a href="/Event/Edit/@Model.Created.Id" class="ze-btn-secondary">✏️ Uredi</a>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="ze-alert-danger" style="margin-bottom:16px">🤖 @Model.Error</div>
+    }
+
+    <form method="post" action="/ai-unos" class="ze-form" id="aiForm">
+        @Html.AntiForgeryToken()
+        <div class="form-group">
+            <label class="ze-label" for="prompt">Opiši event *</label>
+            <textarea name="prompt" id="prompt" class="ze-input" rows="4" required
+                      placeholder="npr. Dodaj techno party u Club H2O sljedeći petak od 22h do 4 ujutro, ulaz 10 eura, 18+">@Model.Prompt</textarea>
+        </div>
+        <button type="submit" class="ze-btn-primary" id="aiSubmit">✨ Kreiraj pomoću AI</button>
+        <span id="aiSpinner" style="display:none;margin-left:12px;color:#7c3aed">Claude razmišlja…</span>
+    </form>
+
+    <div class="ai-examples">
+        <p class="ai-examples-title">Primjeri (klikni za korištenje):</p>
+        <button type="button" class="ai-example">Dodaj techno party u Club H2O sljedeći petak od 22h, ulaz 10 eura, 18+</button>
+        <button type="button" class="ai-example">Pub kviz u Vintage Industrial Baru u srijedu u 20h, besplatan ulaz</button>
+        <button type="button" class="ai-example">Ljetni festival elektronike na Jarunu 15.8. od 18h do 6 ujutro, 25 €</button>
+    </div>
+</div>
+
+<style>
+    .ai-result-card { background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08)); border: 1px solid rgba(124,58,237,0.4); border-radius: 14px; margin-bottom: 20px; overflow: hidden; }
+    .ai-result-head { background: rgba(124,58,237,0.25); padding: 10px 18px; font-weight: 700; color: #c4b5fd; }
+    .ai-result-body { padding: 18px; }
+    .ai-result-name { font-size: 1.25rem; font-weight: 800; margin-bottom: 12px; }
+    .ai-result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 16px; margin-bottom: 12px; }
+    .ai-result-grid > div { display: flex; flex-direction: column; }
+    .ai-k { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; }
+    .ai-v { font-weight: 600; }
+    .ai-result-desc { color: #94a3b8; font-style: italic; margin: 0 0 14px; }
+    .ai-result-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ai-examples { margin-top: 22px; }
+    .ai-examples-title { font-size: 0.8rem; color: #64748b; margin-bottom: 8px; }
+    .ai-example { display: block; width: 100%; text-align: left; background: rgba(255,255,255,0.04); border: 1px dashed rgba(124,58,237,0.35); color: #94a3b8; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; cursor: pointer; font-size: 0.85rem; transition: border-color .15s, color .15s; }
+    .ai-example:hover { border-color: #7c3aed; color: #e2e8f0; }
+    @@media (max-width: 640px) { .ai-result-grid { grid-template-columns: 1fr 1fr; } }
+</style>
+
+<script>
+    document.querySelectorAll('.ai-example').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.getElementById('prompt').value = btn.textContent.trim();
+            document.getElementById('prompt').focus();
+        });
+    });
+    document.getElementById('aiForm').addEventListener('submit', function () {
+        document.getElementById('aiSubmit').disabled = true;
+        document.getElementById('aiSpinner').style.display = 'inline';
+    });
+</script>

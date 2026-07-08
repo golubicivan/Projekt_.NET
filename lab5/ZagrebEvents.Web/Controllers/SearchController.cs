@@ -21,6 +21,7 @@ namespace ZagrebEvents.Web.Controllers
             ("Rezervacije",       "/rezervacije",  "🗓️", "rezervacije stolovi bookiranje admin"),
             ("Korisnici",         "/korisnici",    "👥", "korisnici useri administracija admin"),
             ("Recenzije",         "/Review/Index", "⭐", "recenzije ocjene komentari review"),
+            ("AI unos",           "/ai-unos",      "🤖", "ai unos claude umjetna inteligencija kreiraj event admin"),
             ("Prijava",           "/prijava",      "🔑", "prijava login ulogiraj se"),
             ("Registracija",      "/registracija", "📝", "registracija novi racun sign up"),
             ("Odjava",            "/odjava",       "🚪", "odjava logout izlaz"),
