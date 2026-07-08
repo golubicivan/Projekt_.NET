@@ -96,7 +96,7 @@
                 <p>@Model.Description</p>
             </div>
 
-            <div class="detail-section event-info-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+            <div class="detail-section venue-info-grid">
                 <div class="ze-stat-card"><div class="stat-label">Kapacitet</div><div class="stat-value">@Model.Capacity</div></div>
                 <div class="ze-stat-card"><div class="stat-label">Radno vrijeme</div><div class="stat-value" style="font-size:1rem">@Model.WorkingHours</div></div>
                 <div class="ze-stat-card"><div class="stat-label">Kontakt</div><div class="stat-value" style="font-size:0.9rem">@Model.ContactPhone</div></div>
@@ -373,6 +373,7 @@
 .quick-btn-edit:hover { border-color: #f59e0b; box-shadow: 0 4px 16px rgba(245,158,11,0.3); }
 .quick-btn-icon { font-size: 1.3rem; }
 
+.venue-info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .venue-detail-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
 .venue-event-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #12121a; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); transition: border-color 0.2s; }
 .venue-event-row:hover { border-color: rgba(124,58,237,0.4); }
@@ -396,6 +397,7 @@
 
 @@media (max-width: 768px) {
     .venue-detail-grid { grid-template-columns: 1fr; }
+    .venue-info-grid { grid-template-columns: 1fr; }
     .venue-hero { height: 240px; }
     .admin-quick-buttons { flex-direction: column; }
     .quick-btn { width: 100%; justify-content: center; }
