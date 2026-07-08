@@ -1732,3 +1732,23 @@ a { transition: color 0.15s ease; }
 /* Checkbox label (npr. istaknuti event) */
 .ze-checkbox { display: flex; align-items: center; gap: 10px; cursor: pointer; color: #cbd5e1; font-size: 0.92rem; }
 .ze-checkbox input { width: 18px; height: 18px; accent-color: #7c3aed; cursor: pointer; }
+
+/* Global search u navbaru */
+.ze-global-search {
+    flex: 1; max-width: 340px; margin: 0 16px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--color-surface-2); border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-full); padding: 6px 14px;
+    transition: border-color var(--transition-fast);
+}
+.ze-global-search:focus-within { border-color: var(--color-accent); }
+.gs-nav-icon { font-size: 0.85rem; opacity: 0.6; }
+.gs-nav-input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--color-text-primary); font-size: 0.88rem; font-family: inherit;
+}
+.gs-nav-input::placeholder { color: var(--color-text-muted); }
+@media (max-width: 520px) {
+    .ze-global-search { max-width: none; margin: 0 10px; }
+    .gs-nav-input { font-size: 16px; } /* sprjecava iOS zoom */
+}
