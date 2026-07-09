@@ -20,10 +20,25 @@ namespace ZagrebEvents.Web.Services
         public string Description { get; set; } = "";
     }
 
+    // Rezultat AI provjere slike osobnog dokumenta pri registraciji
+    public class AiDocCheck
+    {
+        public bool DocumentVisible { get; set; }
+        public bool NameMatch { get; set; }
+        public bool DobMatch { get; set; }
+        public string FoundName { get; set; } = "";
+        public string FoundDob { get; set; } = "";
+        public string Reason { get; set; } = "";
+        public bool Valid => DocumentVisible && NameMatch && DobMatch;
+    }
+
     public interface IAiEventService
     {
         bool IsConfigured { get; }
         Task<AiEventDraft> ParseEventAsync(string prompt, IReadOnlyList<(int Id, string Name)> venues);
+
+        // Vraca null kad provjera nije moguca (nema kljuca, nepodrzan format, API greska) - tada se registracija propusta
+        Task<AiDocCheck?> CheckDocumentAsync(string imagePath, string firstName, string lastName, DateTime dateOfBirth);
     }
 
     // AI unos podataka: prirodni jezik -> strukturirani event (Claude API, strukturirani JSON izlaz)
@@ -81,6 +96,98 @@ Pravila:
                         ? "Anthropic API ključ nije valjan. Provjeri user-secrets (Anthropic:ApiKey)."
                         : $"Anthropic API greška: {ex.Message}";
                 return new AiEventDraft { Ok = false, Error = msg };
+            }
+        }
+
+        // AI provjera dokumenta: procita ime i datum rodjenja sa slike i usporedi s podacima registracije
+        public async Task<AiDocCheck?> CheckDocumentAsync(string imagePath, string firstName, string lastName, DateTime dateOfBirth)
+        {
+            if (!IsConfigured || !File.Exists(imagePath)) return null;
+
+            var media = Path.GetExtension(imagePath).ToLowerInvariant() switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => null   // heic i sl. Claude ne cita - propusti bez provjere
+            };
+            if (media == null) return null;
+
+            var b64 = Convert.ToBase64String(await File.ReadAllBytesAsync(imagePath));
+            var system =
+$@"Ti si sustav za provjeru identiteta pri registraciji u aplikaciju GdjeCemo.
+Na slici bi trebao biti osobni dokument (osobna iskaznica, putovnica ili vozačka dozvola).
+Pročitaj podatke s dokumenta i usporedi ih s podacima iz registracije:
+- Ime i prezime: {firstName} {lastName}
+- Datum rođenja: {dateOfBirth:yyyy-MM-dd}
+
+Pravila:
+- Kod imena toleriraj dijakritike (Đurić = Djuric = DURIC), velika/mala slova i redoslijed ime/prezime.
+- dobMatch je true samo ako se datum rođenja s dokumenta točno podudara.
+- Ako na slici nema čitljivog osobnog dokumenta, postavi documentVisible=false.
+- foundDob vrati u formatu yyyy-MM-dd (ili prazno ako nije čitljivo).
+- reason: jedna kratka rečenica na hrvatskom (npr. što se ne podudara ili zašto dokument nije prihvaćen).";
+
+            AnthropicClient client = new() { ApiKey = _apiKey };
+            try
+            {
+                var response = await client.Messages.Create(new MessageCreateParams
+                {
+                    Model = ClaudeModel.ClaudeOpus4_8,
+                    MaxTokens = 2048,
+                    Thinking = new ThinkingConfigAdaptive(),
+                    System = system,
+                    OutputConfig = new OutputConfig
+                    {
+                        Format = new JsonOutputFormat
+                        {
+                            Schema = new Dictionary<string, JsonElement>
+                            {
+                                ["type"] = JsonSerializer.SerializeToElement("object"),
+                                ["properties"] = JsonSerializer.SerializeToElement(new
+                                {
+                                    documentVisible = new { type = "boolean" },
+                                    nameMatch = new { type = "boolean" },
+                                    dobMatch = new { type = "boolean" },
+                                    foundName = new { type = "string" },
+                                    foundDob = new { type = "string" },
+                                    reason = new { type = "string" }
+                                }),
+                                ["required"] = JsonSerializer.SerializeToElement(new[]
+                                {
+                                    "documentVisible", "nameMatch", "dobMatch", "foundName", "foundDob", "reason"
+                                }),
+                                ["additionalProperties"] = JsonSerializer.SerializeToElement(false)
+                            }
+                        }
+                    },
+                    Messages =
+                    [
+                        new()
+                        {
+                            Role = Role.User,
+                            Content = new List<ContentBlockParam>
+                            {
+                                new ImageBlockParam { Source = new Base64ImageSource { Data = b64, MediaType = media } },
+                                new TextBlockParam { Text = "Provjeri dokument prema pravilima iz uputa." }
+                            }
+                        }
+                    ]
+                });
+
+                var json = response.Content.Select(b => b.Value).OfType<TextBlock>()
+                    .Select(t => t.Text).FirstOrDefault();
+                if (string.IsNullOrWhiteSpace(json)) return null;
+
+                _logger.LogInformation("AI provjera dokumenta za {Ime} {Prezime}: {Json}", firstName, lastName, json);
+                return JsonSerializer.Deserialize<AiDocCheck>(json,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            catch (Exception ex)
+            {
+                // Tehnicka greska (mreza, kredit, kljuc) - registracija se ne blokira
+                _logger.LogWarning(ex, "AI provjera dokumenta nije uspjela - preskacem");
+                return null;
             }
         }
 

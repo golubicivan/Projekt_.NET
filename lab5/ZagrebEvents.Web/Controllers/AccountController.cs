@@ -13,17 +13,20 @@ namespace ZagrebEvents.Web.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IWebHostEnvironment _env;
+        private readonly Services.IAiEventService _ai;
 
         public AccountController(
             ZagrebEventsDbContext db,
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            Services.IAiEventService ai)
         {
             _db = db;
             _userManager = userManager;
             _signInManager = signInManager;
             _env = env;
+            _ai = ai;
         }
 
         // Sprema priloženu sliku dokumenta na disk i vraća relativnu putanju (ili null uz grešku u ModelState).
@@ -127,11 +130,34 @@ namespace ZagrebEvents.Web.Controllers
             if (await _userManager.FindByEmailAsync(email) != null)
                 ModelState.AddModelError("", "Korisnik s tim emailom već postoji.");
 
+            if (dateOfBirth == default || dateOfBirth > DateTime.Today || dateOfBirth.Year < 1900)
+                ModelState.AddModelError("dateOfBirth", "Unesi valjan datum rođenja.");
+
             // Slika dokumenta (potvrda dobi i identiteta) - obavezno
             var documentPath = await SaveIdentityDocumentAsync(document);
 
             if (!ModelState.IsValid)
                 return View();
+
+            // AI provjera: ime i datum rodjenja moraju odgovarati podacima na slici dokumenta.
+            // Tehnicke greske (nema kljuca/kredita, nepodrzan format) ne blokiraju registraciju.
+            if (documentPath != null)
+            {
+                var physical = Path.Combine(_env.WebRootPath,
+                    documentPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                var check = await _ai.CheckDocumentAsync(physical, firstName, lastName, dateOfBirth);
+                if (check != null && !check.Valid)
+                {
+                    System.IO.File.Delete(physical);
+                    var detalj = !check.DocumentVisible
+                        ? "na slici nije prepoznat čitljiv osobni dokument"
+                        : !check.NameMatch
+                            ? $"ime na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundName) ? "nečitljivo" : check.FoundName)}) ne odgovara unesenom"
+                            : $"datum rođenja na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundDob) ? "nečitljiv" : check.FoundDob)}) ne odgovara unesenom";
+                    ModelState.AddModelError("document", $"🤖 AI provjera dokumenta nije prošla: {detalj}. {check.Reason}");
+                    return View();
+                }
+            }
 
             // 1. Kreiraj Identity nalog
             var appUser = new AppUser
