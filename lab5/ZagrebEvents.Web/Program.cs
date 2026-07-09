@@ -128,9 +128,15 @@ using (var scope = app.Services.CreateScope())
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Index");
+    // Neuhvacene iznimke -> prijateljska stranica greske (umjesto tihog pada na kartu)
+    app.UseExceptionHandler("/greska/500");
     app.UseHsts();
 }
+
+// 404/403/... bez tijela -> /greska/{code}; API rute ostaju cisti status kodovi (JSON klijenti)
+app.UseWhen(
+    ctx => !ctx.Request.Path.StartsWithSegments("/api"),
+    branch => branch.UseStatusCodePagesWithReExecute("/greska/{0}"));
 
 // Lokalizacija (hr + en)
 var supportedCultures = new[]
