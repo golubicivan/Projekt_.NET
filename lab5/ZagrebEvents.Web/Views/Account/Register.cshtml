@@ -46,7 +46,7 @@
             <div class="form-group">
                 <label class="ze-label">Slika osobnog dokumenta *</label>
                 <input type="file" name="document" class="ze-input ze-file" accept="image/*" required />
-                <small class="text-muted-ze" style="font-size:0.78rem">Fotografija osobne/putovnice/vozačke — potvrda dobi i identiteta (JPG/PNG, max 5 MB).</small>
+                <small class="text-muted-ze" style="font-size:0.78rem">Fotografija osobne/putovnice/vozačke — potvrda dobi i identiteta (JPG/PNG, max 5 MB).<br />🤖 AI provjerava da se ime i datum rođenja podudaraju s dokumentom.</small>
             </div>
 
             <div class="form-row">
@@ -73,8 +73,16 @@
                 <input type="password" name="passwordConfirm" class="ze-input" minlength="6" required />
             </div>
 
-            <button type="submit" class="btn-primary-custom" style="width:100%;margin-top:8px">Registriraj se</button>
+            <button type="submit" class="btn-primary-custom" id="regSubmit" style="width:100%;margin-top:8px">Registriraj se</button>
         </form>
+
+        <script>
+            document.querySelector('.ze-form').addEventListener('submit', function () {
+                var btn = document.getElementById('regSubmit');
+                btn.disabled = true;
+                btn.textContent = '🤖 AI provjerava dokument…';
+            });
+        </script>
 
         <div class="auth-footer">
             <p class="text-muted-ze">Već imaš account? <a href="/prijava" style="color:#7c3aed">Prijavi se</a></p>
