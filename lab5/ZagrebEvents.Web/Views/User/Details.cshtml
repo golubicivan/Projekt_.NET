@@ -47,15 +47,25 @@
             {
                 <div class="ze-alert-danger" style="margin-top:10px">⚠️ Maloljetni korisnik — ograničen pristup 18+ eventima</div>
             }
-            @{ var idDoc = ViewBag.IdentityDocument as string; }
+            @{
+                var idDoc = ViewBag.IdentityDocument as string;
+                var idDocBack = ViewBag.IdentityDocumentBack as string;
+            }
             @if (User.IsInRole("Admin") && !string.IsNullOrEmpty(idDoc))
             {
                 <div class="id-doc-box">
                     <span>🪪 Priloženi dokument (dob/identitet):</span>
                     <a href="@idDoc" target="_blank" rel="noopener">
-                        <img src="@idDoc" alt="Dokument" class="id-doc-thumb" />
-                        Otvori sliku ↗
+                        <img src="@idDoc" alt="Prednja strana" class="id-doc-thumb" />
+                        Prednja ↗
                     </a>
+                    @if (!string.IsNullOrEmpty(idDocBack))
+                    {
+                        <a href="@idDocBack" target="_blank" rel="noopener">
+                            <img src="@idDocBack" alt="Stražnja strana" class="id-doc-thumb" />
+                            Stražnja ↗
+                        </a>
+                    }
                 </div>
             }
         </div>

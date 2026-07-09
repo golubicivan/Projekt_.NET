@@ -13,7 +13,7 @@
     <div class="auth-card">
         <div class="auth-header">
             <h1>Dovrši registraciju</h1>
-            <p class="text-muted-ze">Prijavljen si preko @provider. Unesi OIB i priloži sliku dokumenta.</p>
+            <p class="text-muted-ze">Prijavljen si preko @provider. Unesi OIB, datum rođenja i priloži obje strane osobne.</p>
         </div>
 
         @if (!ViewData.ModelState.IsValid)
@@ -49,19 +49,42 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="ze-label">OIB (11 znamenki)</label>
-                <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" required />
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="ze-label">OIB (11 znamenki)</label>
+                    <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" required />
+                </div>
+                @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
+                {
+                    Name = "dateOfBirth",
+                    Label = "Datum rođenja",
+                    IncludeTime = false,
+                    Required = true
+                })
             </div>
 
             <div class="form-group">
-                <label class="ze-label">Slika osobnog dokumenta *</label>
-                <input type="file" name="document" class="ze-input ze-file" accept="image/*" required />
-                <small class="text-muted-ze" style="font-size:0.78rem">Potvrda dobi i identiteta (JPG/PNG, max 5 MB).</small>
+                <label class="ze-label">Prednja strana osobne *</label>
+                <input type="file" name="documentFront" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Strana s imenom, prezimenom i datumom rođenja (JPG/PNG, max 5 MB).</small>
             </div>
 
-            <button type="submit" class="btn-primary-custom" style="width:100%;margin-top:8px">Dovrši registraciju</button>
+            <div class="form-group">
+                <label class="ze-label">Stražnja strana osobne *</label>
+                <input type="file" name="documentBack" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Strana s OIB-om.<br />🤖 AI provjerava da se ime, datum rođenja i OIB podudaraju s dokumentom.</small>
+            </div>
+
+            <button type="submit" class="btn-primary-custom" id="extSubmit" style="width:100%;margin-top:8px">Dovrši registraciju</button>
         </form>
+
+        <script>
+            document.querySelector('.ze-form').addEventListener('submit', function () {
+                var btn = document.getElementById('extSubmit');
+                btn.disabled = true;
+                btn.textContent = '🤖 AI provjerava dokument…';
+            });
+        </script>
     </div>
 </div>
 

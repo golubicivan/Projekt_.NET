@@ -89,11 +89,13 @@ namespace ZagrebEvents.Web.Controllers
                         .Select(v => (int?)v.Id)
                         .FirstOrDefault();
 
-                    // Slika osobnog dokumenta (za provjeru dobi/identiteta) — samo admin
-                    ViewBag.IdentityDocument = _userManager.Users
+                    // Slike osobnog dokumenta (za provjeru dobi/identiteta) — samo admin
+                    var docs = _userManager.Users
                         .Where(a => a.Id == user.AppUserId)
-                        .Select(a => a.IdentityDocumentPath)
+                        .Select(a => new { a.IdentityDocumentPath, a.IdentityDocumentBackPath })
                         .FirstOrDefault();
+                    ViewBag.IdentityDocument = docs?.IdentityDocumentPath;
+                    ViewBag.IdentityDocumentBack = docs?.IdentityDocumentBackPath;
                 }
             }
 

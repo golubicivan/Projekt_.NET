@@ -30,23 +30,23 @@ namespace ZagrebEvents.Web.Controllers
         }
 
         // Sprema priloženu sliku dokumenta na disk i vraća relativnu putanju (ili null uz grešku u ModelState).
-        private async Task<string?> SaveIdentityDocumentAsync(IFormFile? document)
+        private async Task<string?> SaveIdentityDocumentAsync(IFormFile? document, string field, string label)
         {
             if (document == null || document.Length == 0)
             {
-                ModelState.AddModelError("document", "Priložite sliku osobnog dokumenta (potvrda dobi i identiteta).");
+                ModelState.AddModelError(field, $"Priložite sliku {label} osobnog dokumenta.");
                 return null;
             }
             if (document.Length > 5 * 1024 * 1024)
             {
-                ModelState.AddModelError("document", "Slika je prevelika (max 5 MB).");
+                ModelState.AddModelError(field, $"Slika {label} je prevelika (max 5 MB).");
                 return null;
             }
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp", ".heic" };
             var ext = Path.GetExtension(document.FileName).ToLowerInvariant();
             if (!allowed.Contains(ext))
             {
-                ModelState.AddModelError("document", "Dozvoljene su samo slike (JPG, PNG, WEBP).");
+                ModelState.AddModelError(field, "Dozvoljene su samo slike (JPG, PNG, WEBP).");
                 return null;
             }
 
@@ -58,6 +58,32 @@ namespace ZagrebEvents.Web.Controllers
                 await document.CopyToAsync(stream);
 
             return $"/uploads/documents/{storedName}";
+        }
+
+        // Fizicka putanja spremljenog dokumenta iz relativne (/uploads/documents/...)
+        private string PhysicalDocPath(string relativePath) =>
+            Path.Combine(_env.WebRootPath, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+
+        // AI provjera obje strane osobne; vraca poruku greske ili null ako je sve u redu.
+        // Kod odbijanja brise spremljene slike.
+        private async Task<string?> RunAiIdentityCheckAsync(
+            string frontPath, string backPath, string firstName, string lastName, DateTime dateOfBirth, string oib)
+        {
+            var front = PhysicalDocPath(frontPath);
+            var back = PhysicalDocPath(backPath);
+            var check = await _ai.CheckIdentityAsync(front, back, firstName, lastName, dateOfBirth, oib);
+            if (check == null || check.Valid) return null;   // null = tehnicki nemoguce -> propusti
+
+            System.IO.File.Delete(front);
+            System.IO.File.Delete(back);
+            var detalj = !check.DocumentVisible
+                ? "na slikama nije prepoznat čitljiv osobni dokument"
+                : !check.NameMatch
+                    ? $"ime na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundName) ? "nečitljivo" : check.FoundName)}) ne odgovara unesenom"
+                    : !check.DobMatch
+                        ? $"datum rođenja na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundDob) ? "nečitljiv" : check.FoundDob)}) ne odgovara unesenom"
+                        : $"OIB na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundOib) ? "nečitljiv" : check.FoundOib)}) ne odgovara unesenom";
+            return $"🤖 AI provjera dokumenta nije prošla: {detalj}. {check.Reason}";
         }
 
         // ===================== LOGIN =====================
@@ -114,7 +140,8 @@ namespace ZagrebEvents.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(
             string firstName, string lastName, string email, string password, string passwordConfirm,
-            DateTime dateOfBirth, string? phoneNumber, string oib, IFormFile? document)
+            DateTime dateOfBirth, string? phoneNumber, string oib,
+            IFormFile? documentFront, IFormFile? documentBack)
         {
             // Server-side validacija
             if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) ||
@@ -133,28 +160,21 @@ namespace ZagrebEvents.Web.Controllers
             if (dateOfBirth == default || dateOfBirth > DateTime.Today || dateOfBirth.Year < 1900)
                 ModelState.AddModelError("dateOfBirth", "Unesi valjan datum rođenja.");
 
-            // Slika dokumenta (potvrda dobi i identiteta) - obavezno
-            var documentPath = await SaveIdentityDocumentAsync(document);
+            // Slike obje strane osobnog dokumenta - obavezno
+            var frontPath = await SaveIdentityDocumentAsync(documentFront, "documentFront", "prednje strane");
+            var backPath = await SaveIdentityDocumentAsync(documentBack, "documentBack", "stražnje strane");
 
             if (!ModelState.IsValid)
                 return View();
 
-            // AI provjera: ime i datum rodjenja moraju odgovarati podacima na slici dokumenta.
+            // AI provjera: ime + datum rodjenja (prednja) i OIB (straznja) moraju odgovarati dokumentu.
             // Tehnicke greske (nema kljuca/kredita, nepodrzan format) ne blokiraju registraciju.
-            if (documentPath != null)
+            if (frontPath != null && backPath != null)
             {
-                var physical = Path.Combine(_env.WebRootPath,
-                    documentPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-                var check = await _ai.CheckDocumentAsync(physical, firstName, lastName, dateOfBirth);
-                if (check != null && !check.Valid)
+                var aiError = await RunAiIdentityCheckAsync(frontPath, backPath, firstName, lastName, dateOfBirth, oib);
+                if (aiError != null)
                 {
-                    System.IO.File.Delete(physical);
-                    var detalj = !check.DocumentVisible
-                        ? "na slici nije prepoznat čitljiv osobni dokument"
-                        : !check.NameMatch
-                            ? $"ime na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundName) ? "nečitljivo" : check.FoundName)}) ne odgovara unesenom"
-                            : $"datum rođenja na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundDob) ? "nečitljiv" : check.FoundDob)}) ne odgovara unesenom";
-                    ModelState.AddModelError("document", $"🤖 AI provjera dokumenta nije prošla: {detalj}. {check.Reason}");
+                    ModelState.AddModelError("documentFront", aiError);
                     return View();
                 }
             }
@@ -166,7 +186,8 @@ namespace ZagrebEvents.Web.Controllers
                 Email = email,
                 EmailConfirmed = true,
                 OIB = oib,
-                IdentityDocumentPath = documentPath
+                IdentityDocumentPath = frontPath,
+                IdentityDocumentBackPath = backPath
             };
             var result = await _userManager.CreateAsync(appUser, password);
             if (!result.Succeeded)
@@ -261,7 +282,8 @@ namespace ZagrebEvents.Web.Controllers
         [Route("[controller]/[action]")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExternalLoginConfirmation(
-            string firstName, string lastName, string oib, IFormFile? document, string? returnUrl = null)
+            string firstName, string lastName, string oib, DateTime dateOfBirth,
+            IFormFile? documentFront, IFormFile? documentBack, string? returnUrl = null)
         {
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
@@ -272,7 +294,11 @@ namespace ZagrebEvents.Web.Controllers
             if (string.IsNullOrWhiteSpace(oib) || oib.Length != 11 || !oib.All(char.IsDigit))
                 ModelState.AddModelError(nameof(oib), "OIB mora imati točno 11 znamenki.");
 
-            var documentPath = await SaveIdentityDocumentAsync(document);
+            if (dateOfBirth == default || dateOfBirth > DateTime.Today || dateOfBirth.Year < 1900)
+                ModelState.AddModelError("dateOfBirth", "Unesi valjan datum rođenja.");
+
+            var frontPath = await SaveIdentityDocumentAsync(documentFront, "documentFront", "prednje strane");
+            var backPath = await SaveIdentityDocumentAsync(documentBack, "documentBack", "stražnje strane");
 
             if (!ModelState.IsValid)
             {
@@ -282,13 +308,28 @@ namespace ZagrebEvents.Web.Controllers
                 return View("ExternalLoginConfirmation");
             }
 
+            // Ista AI provjera dokumenta kao kod obicne registracije
+            if (frontPath != null && backPath != null)
+            {
+                var aiError = await RunAiIdentityCheckAsync(frontPath, backPath, firstName, lastName, dateOfBirth, oib);
+                if (aiError != null)
+                {
+                    ModelState.AddModelError("documentFront", aiError);
+                    ViewBag.Email = email;
+                    ViewBag.Provider = info.LoginProvider;
+                    ViewBag.ReturnUrl = returnUrl;
+                    return View("ExternalLoginConfirmation");
+                }
+            }
+
             var appUser = new AppUser
             {
                 UserName = email,
                 Email = email,
                 EmailConfirmed = true,
                 OIB = oib,
-                IdentityDocumentPath = documentPath
+                IdentityDocumentPath = frontPath,
+                IdentityDocumentBackPath = backPath
             };
             var createResult = await _userManager.CreateAsync(appUser);
             if (createResult.Succeeded)
@@ -301,6 +342,7 @@ namespace ZagrebEvents.Web.Controllers
                     FirstName = firstName,
                     LastName = lastName,
                     Email = email,
+                    DateOfBirth = dateOfBirth,
                     Role = UserRole.Guest,
                     RegisteredAt = DateTime.Now,
                     AppUserId = appUser.Id

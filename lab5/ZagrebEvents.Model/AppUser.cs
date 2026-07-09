@@ -17,9 +17,13 @@ namespace ZagrebEvents.Model
         [StringLength(13)]
         public string? JMBG { get; set; }
 
-        // Putanja do slike osobnog dokumenta (potvrda dobi i identiteta) prilozene pri registraciji.
+        // Putanja do slike PREDNJE strane osobnog dokumenta (ime, prezime, datum rodjenja).
         [StringLength(500)]
         public string? IdentityDocumentPath { get; set; }
+
+        // Putanja do slike STRAZNJE strane osobnog dokumenta (OIB).
+        [StringLength(500)]
+        public string? IdentityDocumentBackPath { get; set; }
 
         // Veza na domenski profil je na User.AppUserId strani (jedan smjer).
     }
