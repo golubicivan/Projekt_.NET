@@ -35,5 +35,6 @@ Thumbs.db
 # Uploadani osobni dokumenti (privatnost) i email fallback
 lab5/ZagrebEvents.Web/wwwroot/uploads/documents/
 lab5/ZagrebEvents.Web/App_Data/emails/
+lab5/ZagrebEvents.Web/App_Data/documents/
 lab5/ZagrebEvents.Web/logs/
 publish_output/
