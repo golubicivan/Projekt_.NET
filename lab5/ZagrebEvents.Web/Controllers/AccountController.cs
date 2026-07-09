@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ZagrebEvents.DAL;
@@ -50,19 +51,42 @@ namespace ZagrebEvents.Web.Controllers
                 return null;
             }
 
-            var dir = Path.Combine(_env.WebRootPath, "uploads", "documents");
+            // App_Data NIJE javno dostupan (izvan wwwroot-a) - slike sluzi iskljucivo
+            // admin-only endpoint /dokument/{fileName} ispod.
+            var dir = Path.Combine(_env.ContentRootPath, "App_Data", "documents");
             Directory.CreateDirectory(dir);
             var storedName = Guid.NewGuid().ToString("N") + ext;
             var fullPath = Path.Combine(dir, storedName);
             using (var stream = new FileStream(fullPath, FileMode.Create))
                 await document.CopyToAsync(stream);
 
-            return $"/uploads/documents/{storedName}";
+            return $"/dokument/{storedName}";
         }
 
-        // Fizicka putanja spremljenog dokumenta iz relativne (/uploads/documents/...)
-        private string PhysicalDocPath(string relativePath) =>
-            Path.Combine(_env.WebRootPath, relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        // Fizicka putanja spremljenog dokumenta iz URL-a (/dokument/{fileName})
+        private string PhysicalDocPath(string documentUrl) =>
+            Path.Combine(_env.ContentRootPath, "App_Data", "documents", Path.GetFileName(documentUrl));
+
+        // Slike osobnih dokumenata smije vidjeti SAMO admin (privatnost).
+        // Datoteke su u App_Data (nisu web-dostupne), sluzi ih ovaj autorizirani endpoint.
+        [Authorize(Roles = "Admin")]
+        [Route("dokument/{fileName}")]
+        public IActionResult IdentityDocument(string fileName)
+        {
+            fileName = Path.GetFileName(fileName);   // sprjecava path traversal
+            var path = Path.Combine(_env.ContentRootPath, "App_Data", "documents", fileName);
+            if (!System.IO.File.Exists(path)) return NotFound();
+
+            var contentType = Path.GetExtension(fileName).ToLowerInvariant() switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                ".heic" => "image/heic",
+                _ => "application/octet-stream"
+            };
+            return PhysicalFile(path, contentType);
+        }
 
         // AI provjera obje strane osobne; vraca poruku greske ili null ako je sve u redu.
         // Kod odbijanja brise spremljene slike.
