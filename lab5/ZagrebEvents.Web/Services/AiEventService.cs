@@ -20,16 +20,18 @@ namespace ZagrebEvents.Web.Services
         public string Description { get; set; } = "";
     }
 
-    // Rezultat AI provjere slike osobnog dokumenta pri registraciji
+    // Rezultat AI provjere slika osobnog dokumenta (obje strane) pri registraciji
     public class AiDocCheck
     {
         public bool DocumentVisible { get; set; }
         public bool NameMatch { get; set; }
         public bool DobMatch { get; set; }
+        public bool OibMatch { get; set; }
         public string FoundName { get; set; } = "";
         public string FoundDob { get; set; } = "";
+        public string FoundOib { get; set; } = "";
         public string Reason { get; set; } = "";
-        public bool Valid => DocumentVisible && NameMatch && DobMatch;
+        public bool Valid => DocumentVisible && NameMatch && DobMatch && OibMatch;
     }
 
     public interface IAiEventService
@@ -37,8 +39,11 @@ namespace ZagrebEvents.Web.Services
         bool IsConfigured { get; }
         Task<AiEventDraft> ParseEventAsync(string prompt, IReadOnlyList<(int Id, string Name)> venues);
 
-        // Vraca null kad provjera nije moguca (nema kljuca, nepodrzan format, API greska) - tada se registracija propusta
-        Task<AiDocCheck?> CheckDocumentAsync(string imagePath, string firstName, string lastName, DateTime dateOfBirth);
+        // Provjera obje strane osobne: ime+datum rodjenja (prednja) i OIB (straznja).
+        // Vraca null kad provjera nije moguca (nema kljuca, nepodrzan format, API greska) - tada se registracija propusta.
+        Task<AiDocCheck?> CheckIdentityAsync(
+            string frontPath, string backPath,
+            string firstName, string lastName, DateTime dateOfBirth, string oib);
     }
 
     // AI unos podataka: prirodni jezik -> strukturirani event (Claude API, strukturirani JSON izlaz)
@@ -99,33 +104,45 @@ Pravila:
             }
         }
 
-        // AI provjera dokumenta: procita ime i datum rodjenja sa slike i usporedi s podacima registracije
-        public async Task<AiDocCheck?> CheckDocumentAsync(string imagePath, string firstName, string lastName, DateTime dateOfBirth)
+        private static string? MediaTypeFor(string path) => Path.GetExtension(path).ToLowerInvariant() switch
         {
-            if (!IsConfigured || !File.Exists(imagePath)) return null;
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            _ => null   // heic i sl. Claude ne cita - propusti bez provjere
+        };
 
-            var media = Path.GetExtension(imagePath).ToLowerInvariant() switch
-            {
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".webp" => "image/webp",
-                _ => null   // heic i sl. Claude ne cita - propusti bez provjere
-            };
-            if (media == null) return null;
+        // AI provjera identiteta: dvije slike (prednja i straznja strana osobne),
+        // usporedjuje ime, datum rodjenja i OIB s podacima registracije
+        public async Task<AiDocCheck?> CheckIdentityAsync(
+            string frontPath, string backPath,
+            string firstName, string lastName, DateTime dateOfBirth, string oib)
+        {
+            if (!IsConfigured || !File.Exists(frontPath) || !File.Exists(backPath)) return null;
 
-            var b64 = Convert.ToBase64String(await File.ReadAllBytesAsync(imagePath));
+            var frontMedia = MediaTypeFor(frontPath);
+            var backMedia = MediaTypeFor(backPath);
+            if (frontMedia == null || backMedia == null) return null;
+
+            var frontB64 = Convert.ToBase64String(await File.ReadAllBytesAsync(frontPath));
+            var backB64 = Convert.ToBase64String(await File.ReadAllBytesAsync(backPath));
             var system =
 $@"Ti si sustav za provjeru identiteta pri registraciji u aplikaciju GdjeCemo.
-Na slici bi trebao biti osobni dokument (osobna iskaznica, putovnica ili vozačka dozvola).
-Pročitaj podatke s dokumenta i usporedi ih s podacima iz registracije:
+Priložene su DVIJE slike: prednja i stražnja strana osobnog dokumenta (osobna iskaznica,
+putovnica ili vozačka dozvola). Redoslijed slika nije zajamčen - podatke traži na obje.
+Na hrvatskoj osobnoj: prednja strana ima ime, prezime i datum rođenja, a stražnja OIB.
+
+Usporedi pročitane podatke s podacima iz registracije:
 - Ime i prezime: {firstName} {lastName}
 - Datum rođenja: {dateOfBirth:yyyy-MM-dd}
+- OIB: {oib}
 
 Pravila:
 - Kod imena toleriraj dijakritike (Đurić = Djuric = DURIC), velika/mala slova i redoslijed ime/prezime.
 - dobMatch je true samo ako se datum rođenja s dokumenta točno podudara.
-- Ako na slici nema čitljivog osobnog dokumenta, postavi documentVisible=false.
-- foundDob vrati u formatu yyyy-MM-dd (ili prazno ako nije čitljivo).
+- oibMatch je true samo ako se svih 11 znamenki OIB-a točno podudara. OIB može biti i u MRZ zoni.
+- Ako slike ne prikazuju čitljiv osobni dokument, postavi documentVisible=false.
+- foundDob vrati u formatu yyyy-MM-dd, foundOib kao 11 znamenki (ili prazno ako nije čitljivo).
 - reason: jedna kratka rečenica na hrvatskom (npr. što se ne podudara ili zašto dokument nije prihvaćen).";
 
             AnthropicClient client = new() { ApiKey = _apiKey };
@@ -149,13 +166,16 @@ Pravila:
                                     documentVisible = new { type = "boolean" },
                                     nameMatch = new { type = "boolean" },
                                     dobMatch = new { type = "boolean" },
+                                    oibMatch = new { type = "boolean" },
                                     foundName = new { type = "string" },
                                     foundDob = new { type = "string" },
+                                    foundOib = new { type = "string" },
                                     reason = new { type = "string" }
                                 }),
                                 ["required"] = JsonSerializer.SerializeToElement(new[]
                                 {
-                                    "documentVisible", "nameMatch", "dobMatch", "foundName", "foundDob", "reason"
+                                    "documentVisible", "nameMatch", "dobMatch", "oibMatch",
+                                    "foundName", "foundDob", "foundOib", "reason"
                                 }),
                                 ["additionalProperties"] = JsonSerializer.SerializeToElement(false)
                             }
@@ -168,8 +188,9 @@ Pravila:
                             Role = Role.User,
                             Content = new List<ContentBlockParam>
                             {
-                                new ImageBlockParam { Source = new Base64ImageSource { Data = b64, MediaType = media } },
-                                new TextBlockParam { Text = "Provjeri dokument prema pravilima iz uputa." }
+                                new ImageBlockParam { Source = new Base64ImageSource { Data = frontB64, MediaType = frontMedia } },
+                                new ImageBlockParam { Source = new Base64ImageSource { Data = backB64, MediaType = backMedia } },
+                                new TextBlockParam { Text = "Provjeri obje strane dokumenta prema pravilima iz uputa." }
                             }
                         }
                     ]

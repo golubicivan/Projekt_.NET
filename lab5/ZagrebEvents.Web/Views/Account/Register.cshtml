@@ -44,9 +44,15 @@
             </div>
 
             <div class="form-group">
-                <label class="ze-label">Slika osobnog dokumenta *</label>
-                <input type="file" name="document" class="ze-input ze-file" accept="image/*" required />
-                <small class="text-muted-ze" style="font-size:0.78rem">Fotografija osobne/putovnice/vozačke — potvrda dobi i identiteta (JPG/PNG, max 5 MB).<br />🤖 AI provjerava da se ime i datum rođenja podudaraju s dokumentom.</small>
+                <label class="ze-label">Prednja strana osobne *</label>
+                <input type="file" name="documentFront" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Strana s imenom, prezimenom i datumom rođenja (JPG/PNG, max 5 MB).</small>
+            </div>
+
+            <div class="form-group">
+                <label class="ze-label">Stražnja strana osobne *</label>
+                <input type="file" name="documentBack" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Strana s OIB-om.<br />🤖 AI provjerava da se ime, datum rođenja i OIB podudaraju s dokumentom.</small>
             </div>
 
             <div class="form-row">
