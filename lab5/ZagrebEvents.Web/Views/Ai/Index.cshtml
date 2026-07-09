@@ -43,8 +43,8 @@
                     <p class="ai-result-desc">@Model.Created.Description</p>
                 }
                 <div class="ai-result-actions">
-                    <a href="/event/@Model.Created.Id" class="ze-btn-primary">Otvori event →</a>
-                    <a href="/Event/Edit/@Model.Created.Id" class="ze-btn-secondary">✏️ Uredi</a>
+                    <a href="/event/@Model.Created.Id" class="btn-primary-custom">Otvori event →</a>
+                    <a href="/Event/Edit/@Model.Created.Id" class="btn-secondary-custom">✏️ Uredi</a>
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
             <textarea name="prompt" id="prompt" class="ze-input" rows="4" required
                       placeholder="npr. Dodaj techno party u Club H2O sljedeći petak od 22h do 4 ujutro, ulaz 10 eura, 18+">@Model.Prompt</textarea>
         </div>
-        <button type="submit" class="ze-btn-primary" id="aiSubmit">✨ Kreiraj pomoću AI</button>
+        <button type="submit" class="btn-primary-custom" id="aiSubmit">✨ Kreiraj pomoću AI</button>
         <span id="aiSpinner" style="display:none;margin-left:12px;color:#7c3aed">Claude razmišlja…</span>
     </form>
 

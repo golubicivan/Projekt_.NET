@@ -63,6 +63,10 @@
 <style>
 .gs-form { display: flex; gap: 10px; max-width: 640px; }
 .gs-input { flex: 1; font-size: 1rem; }
+/* Mobitel: gumb ionako dobiva width:100% (globalni CSS) - slozi formu okomito da ne zgnjeci input */
+@@media (max-width: 480px) {
+    .gs-form { flex-direction: column; }
+}
 .gs-group { margin-top: 22px; }
 .gs-group-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 10px; }
 .gs-hits { display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
