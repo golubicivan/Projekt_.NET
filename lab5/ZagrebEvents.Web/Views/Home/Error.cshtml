@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = ViewBag.Naslov as string ?? "Greška";
+    int code = ViewBag.Code is int c ? c : 500;
+}
+
+<div class="err-page">
+    <div class="err-card">
+        <div class="err-code">@(code == 404 ? "🧭" : code == 403 ? "🔒" : "💥") @code</div>
+        <h1>@ViewBag.Naslov</h1>
+        <p class="err-msg">@ViewBag.Poruka</p>
+        <div class="err-actions">
+            <a href="/" class="btn-primary-custom">🗺️ Natrag na kartu</a>
+            <a href="/eventi" class="btn-secondary-custom">🎉 Svi eventi</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .err-page { max-width: 520px; margin: 70px auto; padding: 0 20px; text-align: center; }
+    .err-card { background: #12121a; border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 44px 32px; }
+    .err-code { font-size: 2.6rem; font-weight: 800; color: #7c3aed; margin-bottom: 10px; }
+    .err-card h1 { font-size: 1.5rem; margin: 0 0 10px; color: #f1f5f9; }
+    .err-msg { color: #94a3b8; margin-bottom: 24px; }
+    .err-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+</style>

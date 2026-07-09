@@ -5,8 +5,11 @@
     var provider = ViewBag.Provider as string ?? "Google";
     var returnUrl = ViewBag.ReturnUrl as string;
     var nameParts = name.Split(' ', 2);
-    var firstName = nameParts.Length > 0 ? nameParts[0] : "";
-    var lastName = nameParts.Length > 1 ? nameParts[1] : "";
+    // Nakon serverske greske zadrzi unesene vrijednosti (osim datoteka)
+    var form = Context.Request.HasFormContentType ? Context.Request.Form : null;
+    var firstName = (string?)form?["firstName"] ?? (nameParts.Length > 0 ? nameParts[0] : "");
+    var lastName = (string?)form?["lastName"] ?? (nameParts.Length > 1 ? nameParts[1] : "");
+    DateTime.TryParse(form?["dateOfBirth"], out var enteredDob);
 }
 
 <div class="auth-page">
@@ -52,34 +55,58 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="ze-label">OIB (11 znamenki)</label>
-                    <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" required />
+                    <input type="text" name="oib" value="@(form?["oib"])" class="ze-input" pattern="[0-9]{11}" maxlength="11" required />
+                    @Html.ValidationMessage("oib", null, new { @class = "field-error" })
                 </div>
-                @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
-                {
-                    Name = "dateOfBirth",
-                    Label = "Datum rođenja",
-                    IncludeTime = false,
-                    Required = true
-                })
+                <div class="form-group">
+                    @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
+                    {
+                        Name = "dateOfBirth",
+                        Label = "Datum rođenja",
+                        Value = enteredDob == default ? (DateTime?)null : enteredDob,
+                        IncludeTime = false,
+                        Required = true
+                    })
+                    @Html.ValidationMessage("dateOfBirth", null, new { @class = "field-error" })
+                </div>
             </div>
 
             <div class="form-group">
                 <label class="ze-label">Prednja strana osobne *</label>
                 <input type="file" name="documentFront" class="ze-input ze-file" accept="image/*" required />
                 <small class="text-muted-ze" style="font-size:0.78rem">Strana s imenom, prezimenom i datumom rođenja (JPG/PNG, max 5 MB).</small>
+                <div class="field-error js-file-error"></div>
+                @Html.ValidationMessage("documentFront", null, new { @class = "field-error" })
             </div>
 
             <div class="form-group">
                 <label class="ze-label">Stražnja strana osobne *</label>
                 <input type="file" name="documentBack" class="ze-input ze-file" accept="image/*" required />
                 <small class="text-muted-ze" style="font-size:0.78rem">Strana s OIB-om.<br />🤖 AI provjerava da se ime, datum rođenja i OIB podudaraju s dokumentom.</small>
+                <div class="field-error js-file-error"></div>
+                @Html.ValidationMessage("documentBack", null, new { @class = "field-error" })
             </div>
 
             <button type="submit" class="btn-primary-custom" id="extSubmit" style="width:100%;margin-top:8px">Dovrši registraciju</button>
         </form>
 
         <script>
-            document.querySelector('.ze-form').addEventListener('submit', function () {
+            document.querySelector('.ze-form').addEventListener('submit', function (e) {
+                var ok = true;
+                ['documentFront', 'documentBack'].forEach(function (name) {
+                    var input = document.querySelector('input[name=' + name + ']');
+                    var msg = input.parentElement.querySelector('.js-file-error');
+                    msg.textContent = '';
+                    var f = input.files[0];
+                    if (!f) {
+                        msg.textContent = '⚠️ Priloži sliku ' + (name === 'documentFront' ? 'prednje' : 'stražnje') + ' strane osobne.';
+                        ok = false;
+                    } else if (f.size > 5 * 1024 * 1024) {
+                        msg.textContent = '⚠️ Slika je prevelika (' + (f.size / 1024 / 1024).toFixed(1) + ' MB, max 5 MB) — smanji je ili fotografiraj u nižoj rezoluciji.';
+                        ok = false;
+                    }
+                });
+                if (!ok) { e.preventDefault(); return; }
                 var btn = document.getElementById('extSubmit');
                 btn.disabled = true;
                 btn.textContent = '🤖 AI provjerava dokument…';
@@ -93,6 +120,8 @@
 .auth-card { background: #12121a; border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 32px; }
 .auth-header { text-align: center; margin-bottom: 24px; }
 .auth-header h1 { font-size: 1.8rem; font-weight: 700; color: #f1f5f9; margin: 0 0 6px; }
+.field-error { color: #f87171; font-size: 0.8rem; margin-top: 4px; }
+.field-error:empty { display: none; }
 .ze-file { padding: 10px; cursor: pointer; }
 .ze-file::file-selector-button { background: rgba(124,58,237,0.2); color: #a78bfa; border: none; padding: 6px 12px; border-radius: 6px; margin-right: 10px; cursor: pointer; font-weight: 600; }
 </style>

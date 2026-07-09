@@ -1,5 +1,8 @@
 @{
     ViewData["Title"] = "Registracija";
+    // Nakon serverske greske zadrzi unesene vrijednosti (osim lozinki i datoteka)
+    var form = Context.Request.HasFormContentType ? Context.Request.Form : null;
+    DateTime.TryParse(form?["dateOfBirth"], out var enteredDob);
 }
 
 <div class="auth-page">
@@ -12,9 +15,10 @@
         @if (!ViewData.ModelState.IsValid)
         {
             <div class="ze-alert-danger">
+                <strong>Registracija nije uspjela:</strong>
                 @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                 {
-                    <div>@error.ErrorMessage</div>
+                    <div>• @error.ErrorMessage</div>
                 }
             </div>
         }
@@ -25,47 +29,56 @@
             <div class="form-row">
                 <div class="form-group">
                     <label class="ze-label">Ime</label>
-                    <input type="text" name="firstName" class="ze-input" placeholder="Ivan" required />
+                    <input type="text" name="firstName" value="@(form?["firstName"])" class="ze-input" placeholder="Ivan" required />
                 </div>
                 <div class="form-group">
                     <label class="ze-label">Prezime</label>
-                    <input type="text" name="lastName" class="ze-input" placeholder="Horvat" required />
+                    <input type="text" name="lastName" value="@(form?["lastName"])" class="ze-input" placeholder="Horvat" required />
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="ze-label">Email</label>
-                <input type="email" name="email" class="ze-input" placeholder="ime.prezime@email.com" required />
+                <input type="email" name="email" value="@(form?["email"])" class="ze-input" placeholder="ime.prezime@email.com" required />
             </div>
 
             <div class="form-group">
                 <label class="ze-label">OIB (11 znamenki)</label>
-                <input type="text" name="oib" class="ze-input" pattern="[0-9]{11}" maxlength="11" placeholder="12345678901" required />
+                <input type="text" name="oib" value="@(form?["oib"])" class="ze-input" pattern="[0-9]{11}" maxlength="11" placeholder="12345678901" required />
+                @Html.ValidationMessage("oib", null, new { @class = "field-error" })
             </div>
 
             <div class="form-group">
                 <label class="ze-label">Prednja strana osobne *</label>
                 <input type="file" name="documentFront" class="ze-input ze-file" accept="image/*" required />
                 <small class="text-muted-ze" style="font-size:0.78rem">Strana s imenom, prezimenom i datumom rođenja (JPG/PNG, max 5 MB).</small>
+                <div class="field-error js-file-error"></div>
+                @Html.ValidationMessage("documentFront", null, new { @class = "field-error" })
             </div>
 
             <div class="form-group">
                 <label class="ze-label">Stražnja strana osobne *</label>
                 <input type="file" name="documentBack" class="ze-input ze-file" accept="image/*" required />
                 <small class="text-muted-ze" style="font-size:0.78rem">Strana s OIB-om.<br />🤖 AI provjerava da se ime, datum rođenja i OIB podudaraju s dokumentom.</small>
+                <div class="field-error js-file-error"></div>
+                @Html.ValidationMessage("documentBack", null, new { @class = "field-error" })
             </div>
 
             <div class="form-row">
-                @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
-                {
-                    Name = "dateOfBirth",
-                    Label = "Datum rođenja",
-                    IncludeTime = false,
-                    Required = true
-                })
+                <div class="form-group">
+                    @await Html.PartialAsync("_DatePicker", new ZagrebEvents.Web.Models.DatePickerModel
+                    {
+                        Name = "dateOfBirth",
+                        Label = "Datum rođenja",
+                        Value = enteredDob == default ? (DateTime?)null : enteredDob,
+                        IncludeTime = false,
+                        Required = true
+                    })
+                    @Html.ValidationMessage("dateOfBirth", null, new { @class = "field-error" })
+                </div>
                 <div class="form-group">
                     <label class="ze-label">Telefon (opcionalno)</label>
-                    <input type="tel" name="phoneNumber" class="ze-input" placeholder="+385..." />
+                    <input type="tel" name="phoneNumber" value="@(form?["phoneNumber"])" class="ze-input" placeholder="+385..." />
                 </div>
             </div>
 
@@ -83,7 +96,23 @@
         </form>
 
         <script>
-            document.querySelector('.ze-form').addEventListener('submit', function () {
+            // Klijentska provjera slika PRIJE uploada: odmah jasna poruka umjesto cekanja servera
+            document.querySelector('.ze-form').addEventListener('submit', function (e) {
+                var ok = true;
+                ['documentFront', 'documentBack'].forEach(function (name) {
+                    var input = document.querySelector('input[name=' + name + ']');
+                    var msg = input.parentElement.querySelector('.js-file-error');
+                    msg.textContent = '';
+                    var f = input.files[0];
+                    if (!f) {
+                        msg.textContent = '⚠️ Priloži sliku ' + (name === 'documentFront' ? 'prednje' : 'stražnje') + ' strane osobne.';
+                        ok = false;
+                    } else if (f.size > 5 * 1024 * 1024) {
+                        msg.textContent = '⚠️ Slika je prevelika (' + (f.size / 1024 / 1024).toFixed(1) + ' MB, max 5 MB) — smanji je ili fotografiraj u nižoj rezoluciji.';
+                        ok = false;
+                    }
+                });
+                if (!ok) { e.preventDefault(); return; }
                 var btn = document.getElementById('regSubmit');
                 btn.disabled = true;
                 btn.textContent = '🤖 AI provjerava dokument…';
@@ -104,6 +133,8 @@
 .auth-footer { margin-top: 22px; text-align: center; font-size: 0.9rem; }
 .auth-footer a { text-decoration: none; font-weight: 600; }
 .auth-footer a:hover { text-decoration: underline; }
+.field-error { color: #f87171; font-size: 0.8rem; margin-top: 4px; }
+.field-error:empty { display: none; }
 .ze-file { padding: 10px; cursor: pointer; }
 .ze-file::file-selector-button { background: rgba(124,58,237,0.2); color: #a78bfa; border: none; padding: 6px 12px; border-radius: 6px; margin-right: 10px; cursor: pointer; font-weight: 600; }
 </style>
