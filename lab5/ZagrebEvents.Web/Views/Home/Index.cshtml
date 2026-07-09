@@ -22,10 +22,9 @@
         </div>
     </div>
 
-    @if (ViewBag.ShowWelcome == true)
-    {
-    <!-- Welcome popup: izbor sto zelis vidjeti prije karte (samo prvi ulazak nakon starta app) -->
-    <div class="map-welcome" id="mapWelcome">
+    <!-- Welcome popup: prikazuje se pri svakom ULASKU u aplikaciju (nova sesija preglednika),
+         ali ne pri povratku na kartu unutar iste sesije (sessionStorage) -->
+    <div class="map-welcome" id="mapWelcome" hidden>
         <div class="welcome-card">
             <h2>Gdje ćemo večeras? 🎉</h2>
             <p>Odaberi što želiš vidjeti na karti:</p>
@@ -38,7 +37,6 @@
             <button type="button" id="welcomeGo" class="welcome-go">Prikaži kartu →</button>
         </div>
     </div>
-    }
 </div>
 
 @section Scripts {
@@ -161,12 +159,18 @@
         });
     })();
 
-    // Welcome popup: server ga renderira samo pri prvom otvaranju karte nakon starta aplikacije
+    // Welcome popup: svaki ULAZAK u aplikaciju (nova sesija/tab) -> prikazi;
+    // povratak na kartu unutar iste sesije -> ne gnjavi ponovno
     (function () {
         const welcome = document.getElementById('mapWelcome');
         const goBtn = document.getElementById('welcomeGo');
         if (!welcome || !goBtn) return;
+        let seen = false;
+        try { seen = sessionStorage.getItem('ze-welcomed') === '1'; } catch (e) { /* privatni mod - svejedno prikazi */ }
+        if (seen) { welcome.remove(); return; }
+        welcome.hidden = false;
         goBtn.addEventListener('click', function () {
+            try { sessionStorage.setItem('ze-welcomed', '1'); } catch (e) { }
             // prenesi izbor u filtere na karti
             welcome.querySelectorAll('input[data-type]').forEach(w => {
                 const f = document.querySelector(`.type-filter[value="${w.dataset.type}"]`);
@@ -329,6 +333,7 @@
 @@keyframes ze-user-pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
 
 /* Welcome popup preko karte */
+.map-welcome[hidden] { display: none !important; }
 .map-welcome {
     position: absolute; inset: 0; z-index: 1200;
     display: flex; align-items: center; justify-content: center;
