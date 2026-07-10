@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZagrebEvents.DAL;
 
@@ -11,9 +12,11 @@ using ZagrebEvents.DAL;
 namespace ZagrebEvents.DAL.Migrations
 {
     [DbContext(typeof(ZagrebEventsDbContext))]
-    partial class ZagrebEventsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260710000235_FixVenueCoordinatesPrecise")]
+    partial class FixVenueCoordinatesPrecise
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -6701,9 +6704,9 @@ namespace ZagrebEvents.DAL.Migrations
                             FloorPlanUrl = "",
                             ImageUrl = "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=800",
                             InstagramUrl = "",
-                            Latitude = 45.806269999999998,
+                            Latitude = 45.807650000000002,
                             LogoUrl = "/img/logos/ex-emblem.jpg",
-                            Longitude = 15.9664,
+                            Longitude = 15.96655,
                             Name = "EX Club",
                             Type = 0,
                             WorkingHours = "23:00 - 05:00"
