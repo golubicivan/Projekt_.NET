@@ -85,14 +85,31 @@
                         Slobodno: <b style="color:#10b981">@freeTables.Count</b> / @Model.Venue.Tables.Count stolova
                         @if (Model.AgeLimit > 0)
                         {
-                            <span> · <b style="color:#f59e0b">@(Model.AgeLimit)+</b>
-                            @if (!Model.Venue.IdentityRequired)
+                            <span> · <b style="color:#f59e0b">@(Model.AgeLimit)+</b></span>
+                        }
+                    </p>
+
+                    @* Provjerava li klub osobne — jasno na svakom eventu *@
+                    <div class="id-policy @(Model.Venue.IdentityRequired ? "id-policy-strict" : "id-policy-open")">
+                        @if (Model.Venue.IdentityRequired)
+                        {
+                            <span>🪪 <b>@Model.Venue.Name provjerava osobne iskaznice.</b>
+                            @if (Model.AgeLimit > 0)
                             {
-                                <span class="text-muted-ze">(klub ne provjerava osobne — rezervacija otvorena svima)</span>
+                                <text>Za rezervaciju na ovom eventu trebaš imati @(Model.AgeLimit)+ i potvrđen identitet.</text>
+                            }
+                            else
+                            {
+                                <text>Ovaj event nema dobnu granicu pa je rezervacija otvorena svima.</text>
                             }
                             </span>
                         }
-                    </p>
+                        else
+                        {
+                            <span>🎫 <b>@Model.Venue.Name ne provjerava osobne iskaznice.</b>
+                            Rezervacija je otvorena svim korisnicima@(Model.AgeLimit > 0 ? " — dobna granica je informativna." : ".")</span>
+                        }
+                    </div>
 
                     @{ var policy = ViewBag.ReservationPolicy as ZagrebEvents.Web.Services.ReservationPolicy.Result; }
                     @if (policy != null && !policy.Allowed)
@@ -368,6 +385,11 @@
 
 <style>
 /* Tlocrt: info gumb + modal */
+/* Provjerava li klub osobne (utjece na to tko smije rezervirati) */
+.id-policy { margin: 0 0 14px; padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; line-height: 1.5; }
+.id-policy-strict { background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.35); color: #a5e9f5; }
+.id-policy-open { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.35); color: #fcd9a0; }
+
 /* Poruka kad rezervacija nije dopustena (dob / neprovjeren identitet) */
 .reserve-block {
     background: rgba(245, 158, 11, 0.08);
