@@ -25,6 +25,11 @@ namespace ZagrebEvents.Model
         [StringLength(500)]
         public string? IdentityDocumentBackPath { get; set; }
 
+        // true = AI je (ili admin rucno) potvrdio da se podaci s osobne poklapaju s profilom.
+        // Korisnik koji odbije priloziti osobnu ostaje false i ne moze rezervirati stolove
+        // na eventima s dobnom granicom u klubovima koji traze potvrdjen identitet.
+        public bool IdentityVerified { get; set; }
+
         // Veza na domenski profil je na User.AppUserId strani (jedan smjer).
     }
 }

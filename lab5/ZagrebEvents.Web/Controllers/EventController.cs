@@ -85,7 +85,28 @@ namespace ZagrebEvents.Web.Controllers
             if (!ev.IsUpcoming && !User.IsInRole("Admin"))
                 return NotFound();
 
+            // Smije li prijavljeni korisnik rezervirati (dob + potvrdjen identitet)
+            ViewBag.ReservationPolicy = CheckReservationPolicy(ev);
+
             return View(ev);
+        }
+
+        // Pravila rezervacije: dobna granica eventa + trazi li klub potvrdjen identitet.
+        // Vidi Services/ReservationPolicy.cs
+        private ReservationPolicy.Result CheckReservationPolicy(Event ev)
+        {
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+                return new ReservationPolicy.Result(false,
+                    "Za rezervaciju stola prijavi se ili registriraj.", "/prijava", "Prijavi se");
+
+            var userId = User.GetDomainUserId() ?? 0;
+            var user = _db.Users.FirstOrDefault(u => u.Id == userId);
+
+            var appUserId = User.GetAppUserId();
+            bool verified = appUserId != null &&
+                _db.Set<AppUser>().Any(a => a.Id == appUserId && a.IdentityVerified);
+
+            return ReservationPolicy.Check(ev, user, verified);
         }
 
         // Pomoćna: smije li trenutni korisnik upravljati eventima ovog venuea
@@ -212,6 +233,14 @@ namespace ZagrebEvents.Web.Controllers
         {
             var ev = _db.Events.Include(e => e.Venue).FirstOrDefault(e => e.Id == eventId && e.DeletedAt == null);
             if (ev == null) return NotFound();
+
+            // ZASTITA: dobna granica eventa + potvrdjen identitet (ako ga klub trazi)
+            var policy = CheckReservationPolicy(ev);
+            if (!policy.Allowed)
+            {
+                TempData["ReservationError"] = policy.Reason;
+                return RedirectToAction("Details", new { id = eventId });
+            }
 
             // Stol mora pripadati venueu eventa
             var table = _db.Tables.FirstOrDefault(t => t.Id == tableId && t.VenueId == ev.VenueId);

@@ -37,7 +37,16 @@ namespace ZagrebEvents.DAL
             foreach (var seed in Users)
             {
                 var existing = await userManager.FindByEmailAsync(seed.Email);
-                if (existing == null)
+                if (existing != null)
+                {
+                    // Demo nalozi (postojeci iz ranijih verzija) dobivaju potvrdjen identitet
+                    if (!existing.IdentityVerified)
+                    {
+                        existing.IdentityVerified = true;
+                        await userManager.UpdateAsync(existing);
+                    }
+                }
+                else
                 {
                     var appUser = new AppUser
                     {
@@ -45,7 +54,8 @@ namespace ZagrebEvents.DAL
                         Email = seed.Email,
                         EmailConfirmed = true,
                         OIB = seed.Oib,
-                        JMBG = seed.Jmbg
+                        JMBG = seed.Jmbg,
+                        IdentityVerified = true   // demo nalozi imaju potvrdjen identitet
                     };
                     var result = await userManager.CreateAsync(appUser, seed.Password);
                     if (result.Succeeded)

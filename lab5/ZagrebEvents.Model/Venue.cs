@@ -45,6 +45,11 @@ namespace ZagrebEvents.Model
         [MaxLength(500)]
         public string FloorPlanUrl { get; set; } = "";
 
+        // Trazi li klub potvrdjen identitet (osobna + AI provjera) za rezervaciju stola
+        // na eventima s dobnom granicom. false = klub provjerava dob na ulazu, pa
+        // rezervirati mogu i korisnici bez prilozene osobne.
+        public bool IdentityRequired { get; set; } = true;
+
         // Soft delete
         public DateTime? DeletedAt { get; set; }
 

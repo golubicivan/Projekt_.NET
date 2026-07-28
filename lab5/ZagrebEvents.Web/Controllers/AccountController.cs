@@ -88,15 +88,19 @@ namespace ZagrebEvents.Web.Controllers
             return PhysicalFile(path, contentType);
         }
 
-        // AI provjera obje strane osobne; vraca poruku greske ili null ako je sve u redu.
-        // Kod odbijanja brise spremljene slike.
-        private async Task<string?> RunAiIdentityCheckAsync(
+        // AI provjera obje strane osobne.
+        //   Error    = poruka za korisnika (podaci se ne podudaraju) ili null
+        //   Verified = true samo ako je AI stvarno potvrdio podudaranje
+        // Kad AI nije dostupan (nema kljuca/kredita, format): Error=null, Verified=false
+        // -> registracija prolazi, ali identitet nije potvrdjen (admin ga moze potvrditi rucno).
+        private async Task<(string? Error, bool Verified)> RunAiIdentityCheckAsync(
             string frontPath, string backPath, string firstName, string lastName, DateTime dateOfBirth, string oib)
         {
             var front = PhysicalDocPath(frontPath);
             var back = PhysicalDocPath(backPath);
             var check = await _ai.CheckIdentityAsync(front, back, firstName, lastName, dateOfBirth, oib);
-            if (check == null || check.Valid) return null;   // null = tehnicki nemoguce -> propusti
+            if (check == null) return (null, false);     // AI nedostupan -> propusti, ali bez potvrde
+            if (check.Valid) return (null, true);
 
             System.IO.File.Delete(front);
             System.IO.File.Delete(back);
@@ -107,7 +111,7 @@ namespace ZagrebEvents.Web.Controllers
                     : !check.DobMatch
                         ? $"datum rođenja na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundDob) ? "nečitljiv" : check.FoundDob)}) ne odgovara unesenom"
                         : $"OIB na dokumentu ({(string.IsNullOrWhiteSpace(check.FoundOib) ? "nečitljiv" : check.FoundOib)}) ne odgovara unesenom";
-            return $"🤖 AI provjera dokumenta nije prošla: {detalj}. {check.Reason}";
+            return ($"🤖 AI provjera dokumenta nije prošla: {detalj}. {check.Reason}", false);
         }
 
         // ===================== LOGIN =====================
@@ -165,7 +169,7 @@ namespace ZagrebEvents.Web.Controllers
         public async Task<IActionResult> Register(
             string firstName, string lastName, string email, string password, string passwordConfirm,
             DateTime dateOfBirth, string? phoneNumber, string oib,
-            IFormFile? documentFront, IFormFile? documentBack)
+            IFormFile? documentFront, IFormFile? documentBack, bool skipDocument = false)
         {
             // Server-side validacija
             if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) ||
@@ -184,9 +188,17 @@ namespace ZagrebEvents.Web.Controllers
             if (dateOfBirth == default || dateOfBirth > DateTime.Today || dateOfBirth.Year < 1900)
                 ModelState.AddModelError("dateOfBirth", "Unesi valjan datum rođenja.");
 
-            // Slike obje strane osobnog dokumenta - obavezno
-            var frontPath = await SaveIdentityDocumentAsync(documentFront, "documentFront", "prednje strane");
-            var backPath = await SaveIdentityDocumentAsync(documentBack, "documentBack", "stražnje strane");
+            // Slike obje strane osobnog dokumenta.
+            // Korisnik moze odabrati "ne zelim priloziti osobnu" -> registracija prolazi,
+            // ali bez potvrdjenog identiteta (ogranicene rezervacije, vidi ReservationPolicy).
+            string? frontPath = null, backPath = null;
+            bool identityVerified = false;
+
+            if (!skipDocument)
+            {
+                frontPath = await SaveIdentityDocumentAsync(documentFront, "documentFront", "prednje strane");
+                backPath = await SaveIdentityDocumentAsync(documentBack, "documentBack", "stražnje strane");
+            }
 
             if (!ModelState.IsValid)
                 return View();
@@ -195,12 +207,13 @@ namespace ZagrebEvents.Web.Controllers
             // Tehnicke greske (nema kljuca/kredita, nepodrzan format) ne blokiraju registraciju.
             if (frontPath != null && backPath != null)
             {
-                var aiError = await RunAiIdentityCheckAsync(frontPath, backPath, firstName, lastName, dateOfBirth, oib);
+                var (aiError, verified) = await RunAiIdentityCheckAsync(frontPath, backPath, firstName, lastName, dateOfBirth, oib);
                 if (aiError != null)
                 {
                     ModelState.AddModelError("documentFront", aiError);
                     return View();
                 }
+                identityVerified = verified;
             }
 
             // 1. Kreiraj Identity nalog
@@ -211,7 +224,8 @@ namespace ZagrebEvents.Web.Controllers
                 EmailConfirmed = true,
                 OIB = oib,
                 IdentityDocumentPath = frontPath,
-                IdentityDocumentBackPath = backPath
+                IdentityDocumentBackPath = backPath,
+                IdentityVerified = identityVerified
             };
             var result = await _userManager.CreateAsync(appUser, password);
             if (!result.Succeeded)
@@ -243,6 +257,65 @@ namespace ZagrebEvents.Web.Controllers
 
             TempData["Success"] = $"Dobrodošao/la, {firstName}!";
             return RedirectToAction("Index", "Home");
+        }
+
+        // ===================== NAKNADNA POTVRDA IDENTITETA =====================
+        // Za korisnike koji su pri registraciji preskocili osobnu (ili im AI tada nije bio dostupan).
+        [Authorize]
+        [HttpGet]
+        [Route("potvrdi-identitet")]
+        public async Task<IActionResult> VerifyIdentity()
+        {
+            var appUser = await _userManager.GetUserAsync(User);
+            if (appUser == null) return RedirectToAction(nameof(Login));
+            ViewBag.Verified = appUser.IdentityVerified;
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [Route("potvrdi-identitet")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyIdentity(IFormFile? documentFront, IFormFile? documentBack)
+        {
+            var appUser = await _userManager.GetUserAsync(User);
+            if (appUser == null) return RedirectToAction(nameof(Login));
+
+            var domainUser = _db.Users.FirstOrDefault(u => u.AppUserId == appUser.Id);
+            if (domainUser == null) return NotFound();
+
+            var frontPath = await SaveIdentityDocumentAsync(documentFront, "documentFront", "prednje strane");
+            var backPath = await SaveIdentityDocumentAsync(documentBack, "documentBack", "stražnje strane");
+
+            if (!ModelState.IsValid || frontPath == null || backPath == null)
+            {
+                ViewBag.Verified = appUser.IdentityVerified;
+                return View();
+            }
+
+            // Provjera ide protiv podataka koji su VEC u profilu (ne moze ih se ovdje mijenjati)
+            var (aiError, verified) = await RunAiIdentityCheckAsync(
+                frontPath, backPath, domainUser.FirstName, domainUser.LastName, domainUser.DateOfBirth, appUser.OIB);
+
+            if (aiError != null)
+            {
+                ModelState.AddModelError("documentFront", aiError);
+                ViewBag.Verified = false;
+                return View();
+            }
+
+            appUser.IdentityDocumentPath = frontPath;
+            appUser.IdentityDocumentBackPath = backPath;
+            appUser.IdentityVerified = verified;
+            await _userManager.UpdateAsync(appUser);
+
+            // Osvjezi cookie da nova prava odmah vrijede
+            await _signInManager.RefreshSignInAsync(appUser);
+
+            TempData["Success"] = verified
+                ? "🤖 Identitet je potvrđen — sada možeš rezervirati stolove i na eventima s dobnom granicom."
+                : "Dokument je spremljen, ali AI provjera trenutno nije dostupna. Administrator će ga provjeriti ručno.";
+            return RedirectToAction("Details", "User", new { id = domainUser.Id });
         }
 
         // ===================== LOGOUT =====================
@@ -307,7 +380,7 @@ namespace ZagrebEvents.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExternalLoginConfirmation(
             string firstName, string lastName, string oib, DateTime dateOfBirth,
-            IFormFile? documentFront, IFormFile? documentBack, string? returnUrl = null)
+            IFormFile? documentFront, IFormFile? documentBack, bool skipDocument = false, string? returnUrl = null)
         {
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
@@ -321,8 +394,14 @@ namespace ZagrebEvents.Web.Controllers
             if (dateOfBirth == default || dateOfBirth > DateTime.Today || dateOfBirth.Year < 1900)
                 ModelState.AddModelError("dateOfBirth", "Unesi valjan datum rođenja.");
 
-            var frontPath = await SaveIdentityDocumentAsync(documentFront, "documentFront", "prednje strane");
-            var backPath = await SaveIdentityDocumentAsync(documentBack, "documentBack", "stražnje strane");
+            string? frontPath = null, backPath = null;
+            bool identityVerified = false;
+
+            if (!skipDocument)
+            {
+                frontPath = await SaveIdentityDocumentAsync(documentFront, "documentFront", "prednje strane");
+                backPath = await SaveIdentityDocumentAsync(documentBack, "documentBack", "stražnje strane");
+            }
 
             if (!ModelState.IsValid)
             {
@@ -335,7 +414,7 @@ namespace ZagrebEvents.Web.Controllers
             // Ista AI provjera dokumenta kao kod obicne registracije
             if (frontPath != null && backPath != null)
             {
-                var aiError = await RunAiIdentityCheckAsync(frontPath, backPath, firstName, lastName, dateOfBirth, oib);
+                var (aiError, verified) = await RunAiIdentityCheckAsync(frontPath, backPath, firstName, lastName, dateOfBirth, oib);
                 if (aiError != null)
                 {
                     ModelState.AddModelError("documentFront", aiError);
@@ -344,6 +423,7 @@ namespace ZagrebEvents.Web.Controllers
                     ViewBag.ReturnUrl = returnUrl;
                     return View("ExternalLoginConfirmation");
                 }
+                identityVerified = verified;
             }
 
             var appUser = new AppUser
@@ -353,7 +433,8 @@ namespace ZagrebEvents.Web.Controllers
                 EmailConfirmed = true,
                 OIB = oib,
                 IdentityDocumentPath = frontPath,
-                IdentityDocumentBackPath = backPath
+                IdentityDocumentBackPath = backPath,
+                IdentityVerified = identityVerified
             };
             var createResult = await _userManager.CreateAsync(appUser);
             if (createResult.Succeeded)

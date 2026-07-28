@@ -86,6 +86,17 @@
     </div>
 <div class="form-group">        <label asp-for="FloorPlanUrl" class="ze-label">URL tlocrta s brojevima stolova (za prikaz zauzetosti)</label>        <input asp-for="FloorPlanUrl" type="url" class="ze-input" placeholder="https://... ili /img/floorplans/..." />    </div>
 
+    <div class="form-group">
+        <label class="ze-checkbox">
+            <input asp-for="IdentityRequired" type="checkbox" />
+            <span>Traži potvrđen identitet za evente s dobnom granicom</span>
+        </label>
+        <small class="text-muted-ze" style="font-size:0.78rem">
+            Uključeno: stol na 18+ eventu mogu rezervirati samo korisnici s AI-potvrđenom osobnom.
+            Isključeno: klub dob provjerava na ulazu, pa rezervirati mogu i korisnici bez priložene osobne.
+        </small>
+    </div>
+
     <div style="display:flex;gap:12px;margin-top:24px">
         <button type="submit" class="btn-primary-custom" style="flex:1">Spremi</button>
         <a href="/lokacija/@Model.Id" class="btn-secondary-custom" style="flex:1;text-align:center">Odustani</a>
