@@ -74,6 +74,10 @@ namespace ZagrebEvents.Web.Controllers
 
             if (user == null) return NotFound();
 
+            // Status provjere identiteta (vidi vlasnik profila i admin)
+            ViewBag.IdentityVerified = !string.IsNullOrEmpty(user.AppUserId) &&
+                _userManager.Users.Any(a => a.Id == user.AppUserId && a.IdentityVerified);
+
             // Admin panel za dodjelu uloga: lista venuea + trenutno posjedovani venue
             if (User.IsInRole("Admin"))
             {
@@ -214,6 +218,28 @@ namespace ZagrebEvents.Web.Controllers
 
         // ===================== ADMIN: DODJELA ULOGE + VLASNIŠTVA =====================
         // POST: /User/SetRole/5  -- samo Admin
+        // POST: /User/SetIdentityVerified/5  -- admin rucno potvrdi/povuce provjeru identiteta
+        // (npr. kad AI nije bio dostupan, a admin je pogledao slike dokumenta)
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetIdentityVerified(int id, bool verified)
+        {
+            var user = _db.Users.FirstOrDefault(u => u.Id == id && u.DeletedAt == null);
+            if (user == null || string.IsNullOrEmpty(user.AppUserId)) return NotFound();
+
+            var appUser = await _userManager.FindByIdAsync(user.AppUserId);
+            if (appUser == null) return NotFound();
+
+            appUser.IdentityVerified = verified;
+            await _userManager.UpdateAsync(appUser);
+
+            TempData["Success"] = verified
+                ? $"Identitet korisnika {user.FullName} je ručno potvrđen."
+                : $"Potvrda identiteta za {user.FullName} je povučena.";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]

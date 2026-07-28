@@ -83,8 +83,30 @@
                     </div>
                     <p class="text-muted-ze" style="font-size:0.82rem;margin:6px 0 14px">
                         Slobodno: <b style="color:#10b981">@freeTables.Count</b> / @Model.Venue.Tables.Count stolova
+                        @if (Model.AgeLimit > 0)
+                        {
+                            <span> · <b style="color:#f59e0b">@(Model.AgeLimit)+</b>
+                            @if (!Model.Venue.IdentityRequired)
+                            {
+                                <span class="text-muted-ze">(klub ne traži potvrđen identitet)</span>
+                            }
+                            </span>
+                        }
                     </p>
-                    @if (freeTables.Any())
+
+                    @{ var policy = ViewBag.ReservationPolicy as ZagrebEvents.Web.Services.ReservationPolicy.Result; }
+                    @if (policy != null && !policy.Allowed)
+                    {
+                        <div class="reserve-block">
+                            <div class="reserve-block-title">🔒 Rezervacija nije moguća</div>
+                            <p class="reserve-block-text">@policy.Reason</p>
+                            @if (!string.IsNullOrEmpty(policy.ActionUrl))
+                            {
+                                <a href="@policy.ActionUrl" class="btn-primary-custom">@policy.ActionLabel</a>
+                            }
+                        </div>
+                    }
+                    else if (freeTables.Any())
                     {
                         <form action="/Event/Reserve" method="post" class="ze-form reservation-form">
                             @Html.AntiForgeryToken()
@@ -346,6 +368,15 @@
 
 <style>
 /* Tlocrt: info gumb + modal */
+/* Poruka kad rezervacija nije dopustena (dob / neprovjeren identitet) */
+.reserve-block {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 12px; padding: 16px 18px;
+}
+.reserve-block-title { font-weight: 700; color: #f59e0b; margin-bottom: 6px; }
+.reserve-block-text { color: #cbd5e1; font-size: 0.9rem; margin: 0 0 14px; }
+
 .floorplan-info-btn {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 6px 12px; border-radius: 18px; font-size: 0.78rem; font-weight: 600;

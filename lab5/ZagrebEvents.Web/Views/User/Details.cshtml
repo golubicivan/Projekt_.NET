@@ -50,6 +50,36 @@
             @{
                 var idDoc = ViewBag.IdentityDocument as string;
                 var idDocBack = ViewBag.IdentityDocumentBack as string;
+                bool idVerified = ViewBag.IdentityVerified is bool iv && iv;
+                var currentId = User.GetDomainUserId() ?? 0;
+            }
+
+            @* Status provjere identiteta — vidi vlasnik profila i admin *@
+            <div class="id-status @(idVerified ? "id-ok" : "id-warn")">
+                @if (idVerified)
+                {
+                    <span>🪪 <b>Identitet potvrđen</b> — rezervacije su moguće i na eventima s dobnom granicom.</span>
+                }
+                else
+                {
+                    <span>🪪 <b>Identitet nije potvrđen</b> — rezervacije su moguće samo na eventima bez dobne granice
+                    te u klubovima koji ne traže potvrdu.</span>
+                    @if (currentId == Model.Id)
+                    {
+                        <a href="/potvrdi-identitet" class="btn-primary-custom" style="margin-top:10px;display:inline-block">Potvrdi identitet</a>
+                    }
+                }
+            </div>
+
+            @if (User.IsInRole("Admin") && currentId != Model.Id)
+            {
+                <form method="post" action="/User/SetIdentityVerified/@Model.Id" style="margin-top:8px">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="verified" value="@((!idVerified).ToString().ToLower())" />
+                    <button type="submit" class="btn-secondary-custom" style="font-size:0.8rem">
+                        @(idVerified ? "↩️ Povuci potvrdu identiteta" : "✅ Ručno potvrdi identitet")
+                    </button>
+                </form>
             }
             @if (User.IsInRole("Admin") && !string.IsNullOrEmpty(idDoc))
             {
@@ -190,6 +220,9 @@
 .review-comment { color: #94a3b8; font-size: 0.88rem; margin: 0; }
 .zone-vip { display: inline-block; padding: 2px 10px; border-radius: 10px; background: rgba(124,58,237,0.2); color: #7c3aed; font-size: 0.75rem; font-weight: 600; }
 .zone-regular { display: inline-block; padding: 2px 10px; border-radius: 10px; background: rgba(6,182,212,0.15); color: #06b6d4; font-size: 0.75rem; font-weight: 600; }
+.id-status { margin-top: 12px; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; }
+.id-status.id-ok { background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.4); color: #a7f3d0; }
+.id-status.id-warn { background: rgba(245,158,11,0.09); border: 1px solid rgba(245,158,11,0.4); color: #fcd9a0; }
 .id-doc-box { margin-top: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 0.85rem; color: #94a3b8; }
 .id-doc-box a { display: inline-flex; align-items: center; gap: 8px; color: #a78bfa; text-decoration: none; font-weight: 600; }
 .id-doc-thumb { width: 64px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(124,58,237,0.4); }

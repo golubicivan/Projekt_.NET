@@ -1,0 +1,108 @@
+@{
+    ViewData["Title"] = "Potvrdi identitet";
+    bool verified = ViewBag.Verified is bool v && v;
+}
+
+@section Breadcrumbs {
+<nav class="ze-breadcrumb">
+    <a href="/">Karta</a> › <a href="/moj-profil">Moj profil</a> › <span>Potvrdi identitet</span>
+</nav>
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>🪪 Potvrdi identitet</h1>
+            <p class="text-muted-ze">Priloži obje strane osobne — AI provjeri podudaraju li se s tvojim profilom</p>
+        </div>
+
+        @if (verified)
+        {
+            <div class="ze-alert-success" style="margin-bottom:16px">
+                ✓ Tvoj identitet je već potvrđen. Možeš rezervirati stolove i na eventima s dobnom granicom.
+                Novim uploadom zamijenit ćeš postojeće slike.
+            </div>
+        }
+        else
+        {
+            <div class="ze-alert-danger" style="margin-bottom:16px">
+                Identitet još nije potvrđen — rezervacije su ti moguće samo na eventima <b>bez dobne granice</b>
+                te u klubovima koji ne traže potvrdu identiteta.
+            </div>
+        }
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="ze-alert-danger">
+                <strong>Provjera nije prošla:</strong>
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(e => e.Errors))
+                {
+                    <div>• @error.ErrorMessage</div>
+                }
+            </div>
+        }
+
+        <form method="post" action="/potvrdi-identitet" class="ze-form" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="form-group">
+                <label class="ze-label">Prednja strana osobne *</label>
+                <input type="file" name="documentFront" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Strana s imenom, prezimenom i datumom rođenja (JPG/PNG, max 5 MB).</small>
+                <div class="field-error js-file-error"></div>
+                @Html.ValidationMessage("documentFront", null, new { @class = "field-error" })
+            </div>
+
+            <div class="form-group">
+                <label class="ze-label">Stražnja strana osobne *</label>
+                <input type="file" name="documentBack" class="ze-input ze-file" accept="image/*" required />
+                <small class="text-muted-ze" style="font-size:0.78rem">Strana s OIB-om.</small>
+                <div class="field-error js-file-error"></div>
+                @Html.ValidationMessage("documentBack", null, new { @class = "field-error" })
+            </div>
+
+            <p class="text-muted-ze" style="font-size:0.78rem">
+                🤖 Provjera se radi protiv podataka koji su već u tvom profilu (ime, datum rođenja, OIB) —
+                ovdje ih se ne može mijenjati. Slike vidi samo administrator.
+            </p>
+
+            <button type="submit" class="btn-primary-custom" id="verifySubmit" style="width:100%;margin-top:8px">
+                Pošalji na provjeru
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.querySelector('.ze-form').addEventListener('submit', function (e) {
+        var ok = true;
+        ['documentFront', 'documentBack'].forEach(function (name) {
+            var input = document.querySelector('input[name=' + name + ']');
+            var msg = input.parentElement.querySelector('.js-file-error');
+            msg.textContent = '';
+            var f = input.files[0];
+            if (!f) {
+                msg.textContent = '⚠️ Priloži sliku ' + (name === 'documentFront' ? 'prednje' : 'stražnje') + ' strane osobne.';
+                ok = false;
+            } else if (f.size > 5 * 1024 * 1024) {
+                msg.textContent = '⚠️ Slika je prevelika (' + (f.size / 1024 / 1024).toFixed(1) + ' MB, max 5 MB).';
+                ok = false;
+            }
+        });
+        if (!ok) { e.preventDefault(); return; }
+        var btn = document.getElementById('verifySubmit');
+        btn.disabled = true;
+        btn.textContent = '🤖 AI provjerava dokument…';
+    });
+</script>
+
+<style>
+.auth-page { max-width: 540px; margin: 40px auto; padding: 0 20px; }
+.auth-card { background: #12121a; border: 1px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 32px; }
+.auth-header { text-align: center; margin-bottom: 24px; }
+.auth-header h1 { font-size: 1.6rem; font-weight: 700; color: #f1f5f9; margin: 0 0 6px; }
+.field-error { color: #f87171; font-size: 0.8rem; margin-top: 4px; }
+.field-error:empty { display: none; }
+.ze-file { padding: 10px; cursor: pointer; }
+.ze-file::file-selector-button { background: rgba(124,58,237,0.2); color: #a78bfa; border: none; padding: 6px 12px; border-radius: 6px; margin-right: 10px; cursor: pointer; font-weight: 600; }
+</style>
