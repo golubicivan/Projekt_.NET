@@ -89,11 +89,13 @@
     <div class="form-group">
         <label class="ze-checkbox">
             <input asp-for="IdentityRequired" type="checkbox" />
-            <span>Traži potvrđen identitet za evente s dobnom granicom</span>
+            <span>Klub provjerava osobne iskaznice</span>
         </label>
         <small class="text-muted-ze" style="font-size:0.78rem">
-            Uključeno: stol na 18+ eventu mogu rezervirati samo korisnici s AI-potvrđenom osobnom.
-            Isključeno: klub dob provjerava na ulazu, pa rezervirati mogu i korisnici bez priložene osobne.
+            <b>Uključeno (preporučeno):</b> na eventima s dobnom granicom stol mogu rezervirati samo
+            korisnici koji su dovoljno stari i imaju AI-potvrđenu osobnu.<br />
+            <b>Isključeno:</b> klub ne provjerava osobne — dobna granica na eventima postaje samo
+            informativna, pa stol mogu rezervirati <b>svi, uključujući maloljetnike</b> i korisnike bez priložene osobne.
         </small>
     </div>
 
