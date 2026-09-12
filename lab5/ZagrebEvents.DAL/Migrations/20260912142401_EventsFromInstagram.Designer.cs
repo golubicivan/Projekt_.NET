@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZagrebEvents.DAL;
 
@@ -11,9 +12,11 @@ using ZagrebEvents.DAL;
 namespace ZagrebEvents.DAL.Migrations
 {
     [DbContext(typeof(ZagrebEventsDbContext))]
-    partial class ZagrebEventsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260912142401_EventsFromInstagram")]
+    partial class EventsFromInstagram
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2420,6 +2423,34 @@ namespace ZagrebEvents.DAL.Migrations
                         },
                         new
                         {
+                            Id = 353,
+                            AgeLimit = 18,
+                            Description = "Rezidenti i gost u podrumu Katrana.",
+                            EndTime = new DateTime(2026, 9, 25, 5, 0, 0, 0, DateTimeKind.Unspecified),
+                            EntryPrice = 15.00m,
+                            IsFeatured = false,
+                            Name = "Katran Underground: Techno",
+                            PosterUrl = "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=600",
+                            StartTime = new DateTime(2026, 9, 24, 23, 0, 0, 0, DateTimeKind.Unspecified),
+                            Type = 0,
+                            VenueId = 9
+                        },
+                        new
+                        {
+                            Id = 354,
+                            AgeLimit = 18,
+                            Description = "R'n'B i hip-hop selekcija.",
+                            EndTime = new DateTime(2026, 9, 25, 5, 0, 0, 0, DateTimeKind.Unspecified),
+                            EntryPrice = 10.00m,
+                            IsFeatured = false,
+                            Name = "H2O Thursday Vibes",
+                            PosterUrl = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600",
+                            StartTime = new DateTime(2026, 9, 24, 23, 0, 0, 0, DateTimeKind.Unspecified),
+                            Type = 0,
+                            VenueId = 25
+                        },
+                        new
+                        {
                             Id = 355,
                             AgeLimit = 18,
                             Description = "Još jedno izdanje Grčke večeri — mediteranska atmosfera, ples i tanjuri za razbijanje.",
@@ -2767,20 +2798,6 @@ namespace ZagrebEvents.DAL.Migrations
                             StartTime = new DateTime(2026, 10, 2, 22, 0, 0, 0, DateTimeKind.Unspecified),
                             Type = 0,
                             VenueId = 31
-                        },
-                        new
-                        {
-                            Id = 405,
-                            AgeLimit = 19,
-                            Description = "Otvorenje sezone u Katranu — 4 dance floora, vrata u 23:00.",
-                            EndTime = new DateTime(2026, 9, 19, 5, 0, 0, 0, DateTimeKind.Unspecified),
-                            EntryPrice = 20.00m,
-                            IsFeatured = true,
-                            Name = "Katran Season Opening",
-                            PosterUrl = "https://images.unsplash.com/photo-1574391884720-bbc3740c59d1?w=600",
-                            StartTime = new DateTime(2026, 9, 18, 23, 0, 0, 0, DateTimeKind.Unspecified),
-                            Type = 0,
-                            VenueId = 9
                         });
                 });
 
